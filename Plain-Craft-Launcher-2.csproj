@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Plain Craft Launcher 2</AssemblyName>
+    <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
+    <OutputType>WinExe</OutputType>
+    <UseWPF>True</UseWPF>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <PlatformTarget>x64</PlatformTarget>
+    <LangVersion>11.0</LangVersion>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <RootNamespace />
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+  <ItemGroup>
+    <Page Remove="resources\markdown.xaml" />
+    <EmbeddedResource Include="controls\*.baml" LogicalName="controls/%(Filename)%(Extension)" />
+    <EmbeddedResource Include="pages\**\*.baml" LogicalName="pages/%(RecursiveDir)%(Filename)%(Extension)" />
+    <EmbeddedResource Include="images\**\*.*" LogicalName="images/%(RecursiveDir)%(Filename)%(Extension)" />
+    <EmbeddedResource Include="resources\*.*" LogicalName="resources/%(Filename)%(Extension)" />
+    <EmbeddedResource Include="application.baml" LogicalName="application.baml" />
+    <EmbeddedResource Include="formmain.baml" LogicalName="formmain.baml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="Newtonsoft.Json"><HintPath>libs\Newtonsoft.Json.dll</HintPath></Reference>
+    <Reference Include="System.Text.Json"><HintPath>libs\System.Text.Json.dll</HintPath></Reference>
+    <Reference Include="LiteDB"><HintPath>libs\LiteDB.dll</HintPath></Reference>
+    <Reference Include="NAudio"><HintPath>libs\NAudio.dll</HintPath></Reference>
+    <Reference Include="NAudio.Core"><HintPath>libs\NAudio.Core.dll</HintPath></Reference>
+    <Reference Include="NAudio.WinMM"><HintPath>libs\NAudio.WinMM.dll</HintPath></Reference>
+    <Reference Include="Markdig"><HintPath>libs\Markdig.dll</HintPath></Reference>
+    <Reference Include="Markdig.Wpf"><HintPath>libs\Markdig.Wpf.dll</HintPath></Reference>
+    <Reference Include="PCL.Core"><HintPath>libs\PCL.Core.dll</HintPath></Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Drawing.Common" Version="8.0.7" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2592.51" />
+    <PackageReference Include="fNbt" Version="0.6.4" />
+    <PackageReference Include="System.Management" Version="9.0.0" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,30 @@
+# Build outputs
+bin/
+obj/
+TestResults/
+
+# VS / IDE
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Publish output
+publish/
+dist/
+release/
+
+# Logs
+*.log
+logs/
+
+# Temp
+*.tmp
+*.bak
+Thumbs.db
+Desktop.ini
+
+# ReSharper / Rider
+.idea/
+*.DotSettings.user
