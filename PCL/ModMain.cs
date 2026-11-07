@@ -866,7 +866,9 @@ public sealed class ModMain
 		//IL_010c: Invalid comparison between Unknown and I4
 		MyMsgBoxConverter myMsgBoxConverter = new MyMsgBoxConverter
 		{
-			Type = ((Button2.Equals("") && Button3.Equals("")) ? MyMsgBoxType.Input : MyMsgBoxType.Text),
+			// 普通弹框一律使用纯文本样式；输入框只由 MyMsgBoxInput 显式创建。
+			// （早期 IL 注入把此处的枚举方向写反，导致纯提示框变成输入框。）
+			Type = MyMsgBoxType.Text,
 			Button1 = Button1,
 			Button2 = Button2,
 			Button3 = Button3,
