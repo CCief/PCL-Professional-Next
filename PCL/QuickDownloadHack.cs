@@ -148,12 +148,55 @@ namespace PCL
 
         // 延迟定位用的静态传递（避免闭包类/TranslateTransform/Dispatcher 注入问题）
         private static object _pendingLoader, _pendingPan, _pendingCanvas;
+        // 「下载前置mod」可见性复核用（布局完成后再确认一次当前页是不是模组下载页）
+        private static object _pendingDeps, _pendingPage;
+
+        // 只有「模组下载」页面（PageDownloadMod 里的 PageComp）才显示「下载前置mod」。
+        // 整合包 / 资源包 / 光影 / 数据包 / 世界 / 实例管理页同样用 PageComp，
+        // 但它们没有前置 mod 概念，勾选框不该出现在那里。
+        // 主判定：ModMain.FrmDownloadMod.Content 与当前 PageComp 是同一实例；
+        // 兜底：沿逻辑树向上能找到 PageDownloadMod 容器（框架字段尚未创建时）。
+        private static bool IsModDownloadPage(object pageObj)
+        {
+            if (pageObj == null) return false;
+            try
+            {
+                var f = typeof(ModMain).GetField("FrmDownloadMod",
+                    BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+                var frm = f != null ? f.GetValue(null) : null;
+                if (frm != null)
+                {
+                    var cp = frm.GetType().GetProperty("Content",
+                        BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                    if (cp != null && ReferenceEquals(cp.GetValue(frm, null), pageObj)) return true;
+                }
+            }
+            catch { }
+            try
+            {
+                DependencyObject cur = pageObj as DependencyObject;
+                for (int i = 0; i < 12 && cur != null; i++)
+                {
+                    cur = System.Windows.LogicalTreeHelper.GetParent(cur);
+                    var fe = cur as FrameworkElement;
+                    if (fe != null && fe.GetType().Name == "PageDownloadMod") return true;
+                }
+            }
+            catch { }
+            return false;
+        }
 
         // Canvas.Loaded 事件处理器（方法组，无闭包）：布局完成后精确定位 checkbox 到加载器右侧同行
         private static void OnCanvasLoaded(object sender, RoutedEventArgs e)
         {
             try
             {
+                // 布局完成时再复核一次页面归属：Loaded 早于框架字段创建时，
+                // 模组下载页可能还没被 FrmDownloadMod 引用，这里补上。
+                var deps = _pendingDeps as FrameworkElement;
+                if (deps != null && deps.Visibility != Visibility.Visible && IsModDownloadPage(_pendingPage))
+                    deps.Visibility = Visibility.Visible;
+
                 var canvas = sender as Panel;
                 var lc = _pendingLoader as FrameworkElement;
                 var pa = _pendingPan as FrameworkElement;
@@ -240,7 +283,9 @@ namespace PCL
                 cbDeps.Margin = new Thickness(14, 0, 0, 0);
                 cbDeps.SetChecked(IsDownloadDeps(), true);
                 cbDeps.Change += OnDepsChange;
+                cbDeps.Visibility = IsModDownloadPage(page) ? Visibility.Visible : Visibility.Collapsed;
                 row.Children.Add(cbDeps);
+                _pendingDeps = cbDeps; _pendingPage = page;
 
                 // 目标：排序方式下拉（ComboSearchSort）右侧同一行（= 筛选条右上角空白，紧挨刷新按钮）
                 var sortCombo = GetProperty(page, "ComboSearchSort") as FrameworkElement;
