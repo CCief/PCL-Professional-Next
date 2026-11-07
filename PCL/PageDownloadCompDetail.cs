@@ -1032,6 +1032,26 @@ public class PageDownloadCompDetail : MyPageRight, IComponentConnector
 		{
 			return "快照版本";
 		}
+		// 日历版本号（26.1 / 26.2 / 27.3 …）与 1.x 的结构不同：
+		// 第二段是「当年的第几个版本」，不能拿来判断是否为远古版本，也不能再拼 "1." 前缀。
+		// 否则 26.2 会因 Val("2") < 10 被 FoldOldRelease 折进「远古版本」，
+		// 且在主要版本视图里被错误地显示为 1.2。
+		if (PCLVerCompat.IsCal(Name))
+		{
+			if (Name.Contains("snapshot") || Name.Contains("-pre") || Name.Contains("-rc"))
+			{
+				return "快照版本";
+			}
+			if (MajorOnly)
+			{
+				string[] parts = Name.Split('.');
+				if (parts.Length >= 2)
+				{
+					return parts[0] + "." + ModBase.BeforeFirst(parts[1], " ");
+				}
+			}
+			return Name;
+		}
 		if (Name.StartsWith("1.0") || !PCLVerCompat.StartsWithVer2(Name, "1.") || (FoldOldRelease && ModBase.Val(Name.Split(".", (StringSplitOptions)0)[1]) < 10.0))
 		{
 			return "远古版本";

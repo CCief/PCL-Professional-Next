@@ -267,28 +267,48 @@ namespace PCL
 
                 if (target is Grid grid)
                 {
-                    // Canvas 插 panAlways 第 0 位（坐标系 = panAlways，绝对精确），
-                    // Loaded 事件（方法组）延迟定位（布局完成后 TranslatePoint 才准确）；
-                    // 关键1：Canvas 高度=0，不参与布局（否则高度依赖 checkbox 坐标 → loader 位置 →
+                    // 关键修复：浮层必须挂进筛选条所在的 MyCard 内部。
+                    // MyPageRight.TriggerEnterAnimation 会给每个 MyCard 单独设置 TranslateTransform
+                    // 并错开 25ms 播放入场/退场动画；RenderTransform 变化不触发布局，
+                    // 所以挂在 PanAlways 上、只靠 LayoutUpdated 校正的浮层会「钉」在原处，
+                    // 卡片滑入滑出时两个 CheckBox 不跟着动。
+                    // 挂进 MyCard 后，卡片的整体变换会自然带动浮层；同时
+                    // GetAllAnimControls 遇到 MyCard 就停止递归，浮层不会被单独二次动画。
+                    // 关键1：Canvas 高度=0，不参与布局（否则 checkbox 坐标 → loader 位置 →
                     //        panAlways 布局 → 循环依赖 → WPF 布局无限循环崩溃！）
-                    // 关键2：IsHitTestVisible 保持默认 true（false 会禁用子树命中，checkbox 点不到）
+                    // 关键2：IsHitTestVisible 保持默认 true（false 会禁用子树命中）
                     // 关键3：SetZIndex 置顶 + Canvas 透明区域穿透，不挡下层卡片
                     var panAlways0 = GetProperty(page, "PanAlways") as StackPanel;
                     var loaderCombo = GetProperty(page, "ComboSearchLoader") as FrameworkElement;
                     if (panAlways0 != null && loaderCombo != null)
                     {
+                        FrameworkElement host = FindHostCard(loaderCombo) ?? (FrameworkElement)panAlways0;
+
                         var canvas = new System.Windows.Controls.Canvas();
                         canvas.Tag = "QuickDownloadHackRow";
                         canvas.HorizontalAlignment = HorizontalAlignment.Left;
                         canvas.VerticalAlignment = VerticalAlignment.Top;
                         canvas.Height = 0;          // 关键：0 高度不参与布局，杜绝循环
                         canvas.Children.Add(row);
-                        _pendingLoader = loaderCombo; _pendingPan = panAlways0; _pendingCanvas = canvas;
+                        _pendingLoader = loaderCombo; _pendingPan = host; _pendingCanvas = canvas;
                         // 提升 z 序到最顶层（checkbox 在卡片之上，可点）
                         System.Windows.Controls.Panel.SetZIndex(canvas, 1000);
                         canvas.Loaded += OnCanvasLoaded;
-                        panAlways0.Children.Insert(0, canvas);
-                        DebugLog("canvas inserted at index 0, zero-height (no layout loop)");
+
+                        if (!ReferenceEquals(host, panAlways0))
+                        {
+                            ((Panel)host).Children.Add(canvas);
+                            DebugLog("canvas inserted into host MyCard (follows card animation)");
+                        }
+                        else
+                        {
+                            // 兜底：结构异常找不到宿主卡片时，用渲染帧同步坐标，
+                            // 因为 RenderTransform 动画不会触发 LayoutUpdated。
+                            panAlways0.Children.Insert(0, canvas);
+                            System.Windows.Media.CompositionTarget.Rendering -= OnRenderingReposition;
+                            System.Windows.Media.CompositionTarget.Rendering += OnRenderingReposition;
+                            DebugLog("fallback: canvas on PanAlways + Rendering sync");
+                        }
                     }
                 }
                 else
@@ -335,6 +355,45 @@ namespace PCL
         private static void DebugLog(string msg)
         {
             // 正式版：日志关闭
+        }
+
+        // 沿视觉树向上找筛选条所在的 MyCard（Grid 派生）。
+        // 用类型名比对而不是 typeof(MyCard)，避免 helper 与主模块的类型引用差异。
+        private static FrameworkElement FindHostCard(FrameworkElement fe)
+        {
+            try
+            {
+                DependencyObject cur = fe;
+                for (int i = 0; i < 20 && cur != null; i++)
+                {
+                    cur = System.Windows.Media.VisualTreeHelper.GetParent(cur);
+                    var f = cur as FrameworkElement;
+                    if (f != null && f.GetType().Name == "MyCard") return f;
+                }
+            }
+            catch { }
+            return null;
+        }
+
+        // 兜底路径：卡片做 RenderTransform 动画时不产生布局更新，
+        // 只能在每个渲染帧重算浮层坐标，让按钮跟着卡片一起移动。
+        private static void OnRenderingReposition(object sender, EventArgs e)
+        {
+            try
+            {
+                var canvas = _pendingCanvas as System.Windows.Controls.Canvas;
+                var lc = _pendingLoader as FrameworkElement;
+                var host = _pendingPan as FrameworkElement;
+                if (canvas == null || lc == null || host == null || canvas.Children.Count == 0) return;
+                if (!canvas.IsLoaded)
+                {
+                    System.Windows.Media.CompositionTarget.Rendering -= OnRenderingReposition;
+                    return;
+                }
+                var row = canvas.Children[0] as FrameworkElement;
+                if (row != null) RepositionRow(row, lc, host);
+            }
+            catch { }
         }
 
         private static Panel GetParentPanel(object child)

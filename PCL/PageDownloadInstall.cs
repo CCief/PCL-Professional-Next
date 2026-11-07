@@ -4128,7 +4128,8 @@ public class PageDownloadInstall : MyPageRight, IComponentConnector
 						text = "愚人节版";
 						break;
 					default:
-						text = "远古版";
+						// 日历版本号即使上游 type 字段异常，也不应落进「远古版」
+						text = PCLVerCompat.IsCal(jObject["id"].ToString()) ? "正式版" : "远古版";
 						break;
 					}
 					val[text].Add(jObject);
