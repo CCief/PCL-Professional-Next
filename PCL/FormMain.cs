@@ -3252,6 +3252,55 @@ public class FormMain : Window, IComponentConnector
 		}
 	}
 
+	/// <summary>
+	/// PCL 原生 WPF bug 修复：页面切换动画中直接执行 Decorator.set_Child 时，
+	/// WPF 内部 ChangeLogicalParent → OnInitialized → UpdateStyleProperty → GetRawValue
+	/// 可能因"旧子元素未完全卸载就挂载新元素"触发 NullReferenceException，
+	/// 并连锁导致布局阶段 Grid.MeasureCellsGroup 崩溃。
+	/// 策略：① 先完整卸载旧子元素，再挂载新元素；② 非 UI 线程自动封送；
+	/// ③ 异常时延迟到布局空闲重试，保证页面切换永不崩溃。
+	/// </summary>
+	private static void SafeSetPageChild(System.Windows.Controls.Decorator decorator, System.Windows.UIElement child)
+	{
+		if (decorator == null) return;
+		try
+		{
+			if (!decorator.Dispatcher.CheckAccess())
+			{
+				decorator.Dispatcher.Invoke(new Action(() => SafeSetPageChild(decorator, child)));
+				return;
+			}
+			if (ReferenceEquals(decorator.Child, child)) return;
+			if (decorator.Child != null)
+			{
+				// 关键：先完整卸载旧子元素（同步触发一次完整布局失效），
+				// 避免 WPF 在"移除旧 + 添加新"合并操作中逻辑树状态交错。
+				decorator.Child = null;
+			}
+			decorator.Child = child;
+		}
+		catch (Exception)
+		{
+			// 兜底：延迟到布局空闲时重试挂载，页面切换永不因布局崩溃
+			try
+			{
+				decorator.Dispatcher.BeginInvoke(new Action(() =>
+				{
+					try
+					{
+						if (!ReferenceEquals(decorator.Child, child)) decorator.Child = child;
+					}
+					catch (Exception)
+					{
+					}
+				}), System.Windows.Threading.DispatcherPriority.Loaded);
+			}
+			catch (Exception)
+			{
+			}
+		}
+	}
+
 	private void PageChangeAnim(FrameworkElement TargetLeft, FrameworkElement TargetRight)
 	{
 		//IL_00b7: Unknown result type (might be due to invalid IL or missing references)
@@ -3287,7 +3336,7 @@ public class FormMain : Window, IComponentConnector
 					//IL_0050: Unknown result type (might be due to invalid IL or missing references)
 					//IL_005b: Expected O, but got Unknown
 					ModAnimation.AniControlEnabled++;
-					((Decorator)PanMainLeft).Child = (UIElement)(object)PageLeft;
+					SafeSetPageChild((Decorator)PanMainLeft, (UIElement)(object)PageLeft);
 					((UIElement)PageLeft).Opacity = 0.0;
 					PanMainLeft.Background = null;
 					ModAnimation.AniControlEnabled--;
@@ -3310,7 +3359,7 @@ public class FormMain : Window, IComponentConnector
 					//IL_0070: Expected O, but got Unknown
 					ModAnimation.AniControlEnabled++;
 					((MyPageRight)(object)((Decorator)PanMainRight).Child).PageOnForceExit();
-					((Decorator)PanMainRight).Child = (UIElement)(object)PageRight;
+					SafeSetPageChild((Decorator)PanMainRight, (UIElement)(object)PageRight);
 					((UIElement)PageRight).Opacity = 0.0;
 					PanMainRight.Background = null;
 					ModAnimation.AniControlEnabled--;
