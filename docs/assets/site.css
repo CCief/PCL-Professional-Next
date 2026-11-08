@@ -280,3 +280,103 @@ a { color: inherit; text-decoration: none; }
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* ==================== motion layer ==================== */
+@keyframes riseIn { from { opacity: 0; translate: 0 28px; filter: blur(7px); } to { opacity: 1; translate: 0 0; filter: blur(0); } }
+@keyframes popIn { 0% { opacity: 0; scale: .92; } 62% { scale: 1.02; } 100% { opacity: 1; scale: 1; } }
+@keyframes floatOrb { 0%, 100% { translate: 0 0; scale: 1; } 50% { translate: 38px -32px; scale: 1.14; } }
+@keyframes rowIn { from { opacity: 0; translate: 0 12px; } to { opacity: 1; translate: 0 0; } }
+@keyframes barFlow { from { background-position: 0% 50%; } to { background-position: 200% 50%; } }
+@keyframes btnSheen { from { background-position: 0% 50%; } to { background-position: 200% 50%; } }
+@keyframes pulseDot { 0%, 100% { box-shadow: 0 0 0 0 rgba(111, 199, 154, .55); } 50% { box-shadow: 0 0 0 7px rgba(111, 199, 154, 0); } }
+@keyframes emojiBob { 0%, 100% { translate: 0 0; rotate: 0deg; } 50% { translate: 0 -7px; rotate: -6deg; } }
+
+/* 首屏交错入场 */
+.js-motion .hero .kicker,
+.js-motion .hero h1,
+.js-motion .hero-lead,
+.js-motion .hero-actions,
+.js-motion .hero-meta { animation: riseIn .78s cubic-bezier(.22, 1, .36, 1) both; }
+.js-motion .hero h1 { animation-delay: .08s; }
+.js-motion .hero-lead { animation-delay: .16s; }
+.js-motion .hero-actions { animation-delay: .24s; }
+.js-motion .hero-meta { animation-delay: .32s; }
+.js-motion .version-panel { animation: popIn .9s cubic-bezier(.22, 1, .36, 1) .2s both; }
+
+/* 背景浮动光斑与鼠标光晕 */
+.hero-grid { position: relative; z-index: 1; }
+.orb {
+  position: absolute; z-index: 0; border-radius: 50%;
+  filter: blur(62px); opacity: .42; pointer-events: none;
+  animation: floatOrb 15s ease-in-out infinite;
+}
+.orb--1 { width: 340px; height: 340px; left: -100px; top: -130px; background: #b9d6ff; }
+.orb--2 { width: 300px; height: 300px; right: -70px; top: 30px; background: #e7c9f6; animation-delay: -5s; }
+.orb--3 { width: 270px; height: 270px; left: 44%; bottom: -150px; background: #c6efd7; animation-delay: -9s; }
+.cursor-glow {
+  position: absolute; z-index: 0; left: 0; top: 0;
+  width: 420px; height: 420px; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, rgba(255, 255, 255, .72), rgba(255, 255, 255, 0) 68%);
+  transform: translate3d(var(--gx, -9999px), var(--gy, -9999px), 0) translate(-50%, -50%);
+  opacity: 0; transition: opacity .35s ease;
+}
+
+/* 滚动显现（translate 为独立属性，不与 3D transform 冲突） */
+/* 内容默认可见；只有拿到 .scroll-in 才播放入场动画。
+   即使 JS / IntersectionObserver 不工作，页面也只是没有动画，不会白屏。 */
+.js-motion .scroll-in {
+  animation: riseIn .82s cubic-bezier(.22, 1, .36, 1) both;
+  animation-delay: var(--d, 0ms);
+}
+
+/* 卡片 3D 倾斜 + 光泽细节 */
+.card {
+  transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(var(--lift, 0px));
+  transition: transform .26s ease, box-shadow .26s ease;
+}
+.card:hover {
+  --lift: -8px;
+  transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(-8px);
+  box-shadow: 0 22px 46px rgba(40, 62, 92, .16);
+}
+.card:hover .emoji { animation: emojiBob 1.5s ease-in-out infinite; }
+.card:hover .cta .arrow { transform: translateX(4px) rotate(-12deg); }
+
+/* 版本面板顶部流光、通道色条流动 */
+.version-panel::before {
+  content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  border-radius: 26px 26px 0 0; pointer-events: none;
+  background: linear-gradient(90deg, #8bb6ef, #c6a4e6, #83cda2, #8bb6ef);
+  background-size: 200% 100%; animation: barFlow 6s linear infinite;
+}
+.channel::before {
+  background: linear-gradient(90deg, var(--bar), rgba(255, 255, 255, .95), var(--bar));
+  background-size: 200% 100%; animation: barFlow 5.5s linear infinite;
+}
+
+/* 按钮 hover 流光、导航下划线、顶栏阴影 */
+.btn-primary:hover {
+  background-color: #1f2d3d;
+  background-image: linear-gradient(110deg, #1f2d3d 0%, #3d6291 40%, #1f2d3d 72%);
+  background-size: 200% 100%; animation: btnSheen 1.5s linear infinite;
+}
+.topbar { transition: box-shadow .3s ease, background .3s ease; }
+.topbar.scrolled { background: rgba(255, 255, 255, .94); box-shadow: 0 8px 26px rgba(36, 56, 84, .1); }
+.topnav a { position: relative; }
+.topnav a::after {
+  content: ""; position: absolute; left: 14px; right: 14px; bottom: 5px;
+  height: 2px; border-radius: 2px; background: var(--blue);
+  scale: 0 1; transform-origin: left center; transition: scale .25s ease;
+}
+.topnav a:hover::after { scale: 1 1; }
+
+/* Issue 列表逐条入场、实时状态脉冲 */
+.issue-item { animation: rowIn .5s cubic-bezier(.22, 1, .36, 1) both; animation-delay: calc(var(--i, 0) * 70ms); }
+.board-head .live::before { animation: pulseDot 2.1s ease-in-out infinite; }
+.board-head .live.is-offline::before { background: #c2cbd6; animation: none; box-shadow: none; }
+
+/* 双保险：减少动效时所有元素保持可见 */
+@media (prefers-reduced-motion: reduce) {
+  .js-motion .scroll-in { animation: none !important; }
+  .orb, .cursor-glow { display: none !important; }
+}
