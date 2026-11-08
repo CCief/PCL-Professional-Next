@@ -4,7 +4,7 @@
 
 PCL Pro-N 是 [Plain Craft Launcher 2](https://github.com/Hex-Dragon/PCL2) 的一条远端衍生分支，核心目标是**让下载更简单**：快捷下载、自动安装前置模组、一键匹配版本与加载器。本仓库 `PCL-Professional-Next` 是它的源码仓库。
 
-当前版本：**v0.1.0-alpha**（第一个预发行版）
+当前版本：**v0.1.0-alpha**（Alpha 通道 · 第一个预发行版）｜ 发布通道规则见 [RELEASE_CHANNELS.md](RELEASE_CHANNELS.md)
 
 ## 🗂️ Issue 导航
 
@@ -64,14 +64,24 @@ dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=true
 └── PCL/QuickDownloadHack.cs  # 快捷下载/自动前置等增强功能实现
 ```
 
-## 📦 发布流程
+## 📦 版本与发布
 
-仓库内置 GitHub Actions：推送 `v*` 标签即自动构建并生成 Release。
+本项目分 **Alpha / Beta / Release** 三个发布通道，通道由版本标签后缀决定，完整规则见 [RELEASE_CHANNELS.md](RELEASE_CHANNELS.md)。
+
+| 标签 | 通道 | 用途与定位 | Release 标记 |
+|---|---|---|---|
+| `v0.2.0-alpha.1` | Alpha | 随时构建、允许不稳定，新功能研发与实验 | Pre-release |
+| `v0.2.0-beta.1` | Beta | 稳定版的测试版本，筛选后的 Alpha 功能做优化与稳定性测试 | Pre-release |
+| `v0.2.0` | Release | 经 Beta 长期公测与问题修复后的最稳定正式版 | Latest |
+
+仓库内置 GitHub Actions：推送合规的 `v*` 标签会自动校验格式、按后缀判定通道，并生成对应类型的 Release（Alpha/Beta 绝不会被标成正式版）。
 
 ```bash
-git tag v1.1.0
-git push origin v1.1.0
+git tag v0.2.0-alpha.1
+git push origin v0.2.0-alpha.1
 ```
+
+> ⚠️ 自动构建产出的是源码重建版 `win-x64.zip`；对外交付的 IL 注入运行版**单文件 exe** 仍由手工打包并上传，两者不是同一产物。详见通道文档「已知边界」。
 
 ## 📜 许可证与第三方组件
 

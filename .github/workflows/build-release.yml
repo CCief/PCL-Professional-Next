@@ -22,12 +22,26 @@ jobs:
         with:
           dotnet-version: "8.0.x"
 
-      - name: Get version from tag
+      - name: Resolve version & channel from tag
         id: version
         shell: bash
         run: |
           TAG="${GITHUB_REF_NAME#v}"
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            if [[ ! "$TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-(alpha|beta)(\.[0-9]+)?)?$ ]]; then
+              echo "::error::标签 ${GITHUB_REF_NAME} 不符合 vX.Y.Z[-alpha[.N]|-beta[.N]] 规范，详见 RELEASE_CHANNELS.md"
+              exit 1
+            fi
+          fi
+          case "$TAG" in
+            *-alpha*) CHANNEL="Alpha";   PRERELEASE="true"  ;;
+            *-beta*)  CHANNEL="Beta";    PRERELEASE="true"  ;;
+            *)        CHANNEL="Release"; PRERELEASE="false" ;;
+          esac
           echo "version=$TAG" >> "$GITHUB_OUTPUT"
+          echo "channel=$CHANNEL" >> "$GITHUB_OUTPUT"
+          echo "prerelease=$PRERELEASE" >> "$GITHUB_OUTPUT"
+          echo "$GITHUB_REF_NAME -> channel=$CHANNEL, prerelease=$PRERELEASE"
 
       - name: Publish (self-contained)
         shell: bash
@@ -50,15 +64,17 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/v')
         with:
-          name: "PCL Pro-N v${{ steps.version.outputs.version }}"
+          name: "PCL Pro-N v${{ steps.version.outputs.version }} · ${{ steps.version.outputs.channel }}"
           body: |
-            ## PCL Pro-N v${{ steps.version.outputs.version }}
+            ## PCL Pro-N v${{ steps.version.outputs.version }}（${{ steps.version.outputs.channel }} 通道）
 
             自动构建产物（自包含版，无需安装 .NET 8）：
             - `PCL-Pro-N-v${{ steps.version.outputs.version }}-win-x64.zip` —— 解压后运行 `Plain Craft Launcher 2.exe`
+
+            发布通道：Alpha 随时构建允许不稳定 / Beta 稳定版测试 / Release 正式发布。规则见仓库 RELEASE_CHANNELS.md。
           files: publish/PCL-Pro-N-*.zip
           draft: false
-          prerelease: false
+          prerelease: ${{ steps.version.outputs.prerelease == 'true' }}
 
       - name: Upload artifact (workflow_dispatch)
         uses: actions/upload-artifact@v4
