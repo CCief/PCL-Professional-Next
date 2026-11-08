@@ -103,10 +103,6 @@ namespace PCL
             catch { }
         }
 
-        // 已注入过 CheckBox 的 PageComp 实例（防重复注入）
-        private static readonly System.Collections.Generic.HashSet<object> _injectedPages =
-            new System.Collections.Generic.HashSet<object>();
-
         // 清理历史错误前缀文件（只跑一次）
         private static bool _prefixCleaned = false;
 
@@ -146,10 +142,13 @@ namespace PCL
             catch { }
         }
 
-        // 延迟定位用的静态传递（避免闭包类/TranslateTransform/Dispatcher 注入问题）
-        private static object _pendingLoader, _pendingPan, _pendingCanvas;
-        // 「下载前置mod」可见性复核用（布局完成后再确认一次当前页是不是模组下载页）
-        private static object _pendingDeps, _pendingPage;
+        // 每个 PageComp 注入的一组浮层各自持有完整状态（object[]，见 MakeState）。
+        // 不能用「最后一次注入」的全局单值：PageComp_IsVisibleChanged 每次切换分类都会
+        // 调 SetupCheckBoxes，新页面会覆盖它，导致模组页按钮按别人的坐标定位；
+        // 且切回模组页时若因「已注入」直接 return，位置永远回不来（不可逆 + 重叠）。
+        // 刻意不带初始化器：portfix 只补字段定义、不移植 .cctor，运行版里初始为 null，
+        // 所有取值必须走 GetStates() 惰性创建。
+        private static object _stateList;
 
         // 只有「模组下载」页面（PageDownloadMod 里的 PageComp）才显示「下载前置mod」。
         // 整合包 / 资源包 / 光影 / 数据包 / 世界 / 实例管理页同样用 PageComp，
@@ -186,42 +185,111 @@ namespace PCL
             return false;
         }
 
-        // Canvas.Loaded 事件处理器（方法组，无闭包）：布局完成后精确定位 checkbox 到加载器右侧同行
+        // 全部注入组（object[] of object[]）。惰性创建，不依赖 .cctor。
+        private static object[] GetStates()
+        {
+            return _stateList as object[];
+        }
+
+        private static void AddState(object[] state)
+        {
+            var arr = GetStates();
+            int n = arr == null ? 0 : arr.Length;
+            var next = new object[n + 1];
+            for (int i = 0; i < n; i++) next[i] = arr[i];
+            next[n] = state;
+            _stateList = next;
+        }
+
+        private static object[] FindState(object page)
+        {
+            var arr = GetStates();
+            if (arr == null) return null;
+            for (int i = 0; i < arr.Length; i++)
+            {
+                var s = arr[i] as object[];
+                if (s != null && s.Length >= 7 && ReferenceEquals(s[4], page)) return s;
+            }
+            return null;
+        }
+
+        // state 布局（全用 BCL 类型，避免类型移植引入新类）：
+        //  [0]=加载器下拉   [1]=宿主(筛选条 MyCard / PanAlways)  [2]=Canvas(无则 null)
+        //  [3]=下载前置mod  [4]=所属 PageComp                    [5]=按钮行 StackPanel
+        //  [6]=排序方式下拉(备用锚点)
+        private static object[] MakeState(object loader, object host, object canvas,
+                                          object deps, object page, object row, object sort)
+        {
+            return new object[] { loader, host, canvas, deps, page, row, sort };
+        }
+
+        // 每组自己复核「下载前置mod」可见性 + 重定位；切换分类时再次调用，保证可逆。
+        private static void SyncState(object[] state)
+        {
+            try
+            {
+                if (state == null || state.Length < 7) return;
+                var deps = state[3] as FrameworkElement;
+                if (deps != null)
+                {
+                    var want = IsModDownloadPage(state[4]) ? Visibility.Visible : Visibility.Collapsed;
+                    if (deps.Visibility != want) deps.Visibility = want;
+                }
+                RepositionState(state);
+            }
+            catch { }
+        }
+
+        // 只重定位：优先用加载器下拉当锚点；数据包/资源包等页把它折叠了（宽 0），
+        // 退回「排序方式」下拉。锚点或宿主不可见时直接跳过，绝不把坏坐标写进去
+        // （页面切走时 TranslatePoint 会给出无效值，写了就再也回不来）。
+        private static void RepositionState(object[] state)
+        {
+            try
+            {
+                if (state == null || state.Length < 7) return;
+                if (state[2] == null) return;   // 非浮层布局，由容器自动排列
+                var row = state[5] as FrameworkElement;
+                var host = state[1] as FrameworkElement;
+                if (row == null || host == null || !host.IsLoaded || !host.IsVisible) return;
+                var loader = state[0] as FrameworkElement;
+                var sort = state[6] as FrameworkElement;
+                FrameworkElement anchor = null;
+                if (loader != null && loader.IsLoaded && loader.IsVisible && loader.ActualWidth > 10)
+                    anchor = loader;
+                else if (sort != null && sort.IsLoaded && sort.IsVisible && sort.ActualWidth > 10)
+                    anchor = sort;
+                if (anchor == null) return;
+                RepositionRow(row, anchor, host);
+            }
+            catch { }
+        }
+
+        // Canvas.Loaded：只处理自己这一组（状态从 Tag 取），并挂上持续校正
         private static void OnCanvasLoaded(object sender, RoutedEventArgs e)
         {
             try
             {
-                // 布局完成时再复核一次页面归属：Loaded 早于框架字段创建时，
-                // 模组下载页可能还没被 FrmDownloadMod 引用，这里补上。
-                var deps = _pendingDeps as FrameworkElement;
-                if (deps != null && deps.Visibility != Visibility.Visible && IsModDownloadPage(_pendingPage))
-                    deps.Visibility = Visibility.Visible;
-
-                var canvas = sender as Panel;
-                var lc = _pendingLoader as FrameworkElement;
-                var pa = _pendingPan as FrameworkElement;
-                // 注意：不清空静态字段——LayoutUpdated 持续校正还需要它们
-                if (canvas == null || lc == null || pa == null || canvas.Children.Count == 0) return;
-                var row = canvas.Children[0] as FrameworkElement;
+                var canvas = sender as FrameworkElement;
+                var state = canvas != null ? canvas.Tag as object[] : null;
+                if (state == null) return;
+                SyncState(state);
+                var row = state[5] as FrameworkElement;
                 if (row == null) return;
-                RepositionRow(row, lc, pa);
-                // 持续校正：页面切换/布局变化后按钮不"飞走"
                 row.LayoutUpdated -= OnRowLayoutUpdated;
                 row.LayoutUpdated += OnRowLayoutUpdated;
             }
             catch { }
         }
 
-        // 持续校正按钮位置（LayoutUpdated 高频触发，只在偏差 > 2px 时更新，避免布局循环）
+        // 持续校正：每组只用自己的锚点，不受其他页面注入影响
         private static void OnRowLayoutUpdated(object sender, EventArgs e)
         {
             try
             {
                 var row = sender as FrameworkElement;
-                var lc = _pendingLoader as FrameworkElement;
-                var pa = _pendingPan as FrameworkElement;
-                if (row == null || lc == null || pa == null) return;
-                RepositionRow(row, lc, pa);
+                var state = row != null ? row.Tag as object[] : null;
+                if (state != null) RepositionState(state);
             }
             catch { }
         }
@@ -231,9 +299,11 @@ namespace PCL
             try
             {
                 var pt = lc.TranslatePoint(new Point(0, 0), pa);
+                if (double.IsNaN(pt.X) || double.IsNaN(pt.Y) ||
+                    double.IsInfinity(pt.X) || double.IsInfinity(pt.Y)) return;
                 double w = lc.ActualWidth > 10 ? lc.ActualWidth : 90;
-                double targetLeft = pt.X + w + 7;    // 向左 4px
-                double targetTop = pt.Y + 4;         // 向上 2px
+                double targetLeft = pt.X + w + 7;
+                double targetTop = pt.Y + 4;
                 double curL = System.Windows.Controls.Canvas.GetLeft(row);
                 double curT = System.Windows.Controls.Canvas.GetTop(row);
                 if (double.IsNaN(curL) || Math.Abs(curL - targetLeft) > 2 || Math.Abs(curT - targetTop) > 2)
@@ -245,28 +315,27 @@ namespace PCL
             catch { }
         }
 
-        // ---------- UI 注入：把 2 个 CheckBox 放到筛选条右上角（排序方式右侧、刷新按钮旁） ----------
+        // ---------- UI 注入：把 2 个 CheckBox 放到筛选条右上角 ----------
         public static void SetupCheckBoxes(object pageObj)
         {
             try
             {
                 var page = pageObj as PageComp;
-                if (page == null) { DebugLog("page is null"); return; }
+                if (page == null) return;
 
-                // 用静态 HashSet 防重复（比视觉树遍历可靠，因为 row 可能被加到 Grid.Children 而非 panAlways.Children）
-                if (_injectedPages.Contains(page)) return;
-                _injectedPages.Add(page);
+                // 关键：PageComp_IsVisibleChanged 每次切换分类都会调进来。
+                // 已注入过的页面不能「直接 return」——否则切回模组页时不会重新定位，
+                // 位置会停在别的页面算出的坐标上（不可逆 + 与筛选条重叠）。
+                var existing = FindState(page);
+                if (existing != null) { SyncState(existing); return; }
 
                 var panAlways = GetProperty(page, "PanAlways") as StackPanel;
-                if (panAlways == null) { DebugLog("PanAlways is null"); return; }
+                if (panAlways == null) return;
 
-                // 一次性清理历史遗留的错误前缀文件（如 [工业时代2] xxx.jar → xxx.jar），
-                // 只处理明确错误前缀，不影响 PCL Pro 正常命名的主下载文件
                 CleanBadPrefixMods();
 
                 // 两个 CheckBox 放进独立的水平 StackPanel（保证不重叠）
                 var row = new StackPanel();
-                row.Tag = "QuickDownloadHackRow";
                 row.Orientation = Orientation.Horizontal;
                 row.HorizontalAlignment = HorizontalAlignment.Left;
                 row.Margin = new Thickness(10, 0, 0, 0);
@@ -283,21 +352,17 @@ namespace PCL
                 cbDeps.Margin = new Thickness(14, 0, 0, 0);
                 cbDeps.SetChecked(IsDownloadDeps(), true);
                 cbDeps.Change += OnDepsChange;
-                cbDeps.Visibility = IsModDownloadPage(page) ? Visibility.Visible : Visibility.Collapsed;
+                cbDeps.Visibility = Visibility.Collapsed;   // 由 SyncState 按本组 page 决定
                 row.Children.Add(cbDeps);
-                _pendingDeps = cbDeps; _pendingPage = page;
 
-                // 目标：排序方式下拉（ComboSearchSort）右侧同一行（= 筛选条右上角空白，紧挨刷新按钮）
+                // 锚点：加载器下拉（数据包等页会折叠它），备用排序方式下拉
                 var sortCombo = GetProperty(page, "ComboSearchSort") as FrameworkElement;
-                Panel target = null;
-                if (sortCombo != null)
-                {
-                    target = GetParentPanel(sortCombo);
-                    DebugLog("ComboSearchSort Parent=" + (target != null ? target.GetType().Name : "null"));
-                }
+                var loaderCombo = GetProperty(page, "ComboSearchLoader") as FrameworkElement;
+                Panel target = sortCombo != null ? GetParentPanel(sortCombo) : null;
+
                 if (target == null)
                 {
-                    // 兜底：加载器不可用（如整合包页），插到 PanResults 之前（筛选条下方）
+                    // 兜底：结构异常时插到 PanResults 之前（由容器自动排列，不需 Canvas 定位）
                     int idx = panAlways.Children.Count;
                     var panResults = GetProperty(page, "PanResults") as FrameworkElement;
                     if (panResults != null)
@@ -306,55 +371,44 @@ namespace PCL
                         if (i2 >= 0) idx = i2;
                     }
                     panAlways.Children.Insert(idx, row);
-                    DebugLog("fallback: injected before PanResults @ " + idx);
+                    var st0 = MakeState(loaderCombo, panAlways, null, cbDeps, page, row, sortCombo);
+                    row.Tag = st0;
+                    AddState(st0);
+                    SyncState(st0);
                     return;
                 }
 
-                if (target is Grid grid)
+                if (target is Grid)
                 {
-                    // 关键修复：浮层必须挂进筛选条所在的 MyCard 内部。
-                    // MyPageRight.TriggerEnterAnimation 会给每个 MyCard 单独设置 TranslateTransform
-                    // 并错开 25ms 播放入场/退场动画；RenderTransform 变化不触发布局，
-                    // 所以挂在 PanAlways 上、只靠 LayoutUpdated 校正的浮层会「钉」在原处，
-                    // 卡片滑入滑出时两个 CheckBox 不跟着动。
-                    // 挂进 MyCard 后，卡片的整体变换会自然带动浮层；同时
-                    // GetAllAnimControls 遇到 MyCard 就停止递归，浮层不会被单独二次动画。
-                    // 关键1：Canvas 高度=0，不参与布局（否则 checkbox 坐标 → loader 位置 →
-                    //        panAlways 布局 → 循环依赖 → WPF 布局无限循环崩溃！）
-                    // 关键2：IsHitTestVisible 保持默认 true（false 会禁用子树命中）
-                    // 关键3：SetZIndex 置顶 + Canvas 透明区域穿透，不挡下层卡片
-                    var panAlways0 = GetProperty(page, "PanAlways") as StackPanel;
-                    var loaderCombo = GetProperty(page, "ComboSearchLoader") as FrameworkElement;
-                    if (panAlways0 != null && loaderCombo != null)
-                    {
-                        FrameworkElement host = FindHostCard(loaderCombo) ?? (FrameworkElement)panAlways0;
+                    // 浮层挂进筛选条所在的 MyCard 内部：卡片入场动画（TranslateTransform）
+                    // 会整体带动它，且 GetAllAnimControls 遇到 MyCard 就停止递归。
+                    // Canvas 高度 0 不参与布局，避免「坐标 → loader → panAlways 布局」循环。
+                    FrameworkElement host = (loaderCombo != null ? FindHostCard(loaderCombo) : null)
+                                            ?? (FrameworkElement)panAlways;
 
-                        var canvas = new System.Windows.Controls.Canvas();
-                        canvas.Tag = "QuickDownloadHackRow";
-                        canvas.HorizontalAlignment = HorizontalAlignment.Left;
-                        canvas.VerticalAlignment = VerticalAlignment.Top;
-                        canvas.Height = 0;          // 关键：0 高度不参与布局，杜绝循环
-                        canvas.Children.Add(row);
-                        _pendingLoader = loaderCombo; _pendingPan = host; _pendingCanvas = canvas;
-                        // 提升 z 序到最顶层（checkbox 在卡片之上，可点）
-                        System.Windows.Controls.Panel.SetZIndex(canvas, 1000);
-                        canvas.Loaded += OnCanvasLoaded;
+                    var canvas = new System.Windows.Controls.Canvas();
+                    canvas.HorizontalAlignment = HorizontalAlignment.Left;
+                    canvas.VerticalAlignment = VerticalAlignment.Top;
+                    canvas.Height = 0;
+                    canvas.Children.Add(row);
+                    System.Windows.Controls.Panel.SetZIndex(canvas, 1000);
 
-                        if (!ReferenceEquals(host, panAlways0))
-                        {
-                            ((Panel)host).Children.Add(canvas);
-                            DebugLog("canvas inserted into host MyCard (follows card animation)");
-                        }
-                        else
-                        {
-                            // 兜底：结构异常找不到宿主卡片时，用渲染帧同步坐标，
-                            // 因为 RenderTransform 动画不会触发 LayoutUpdated。
-                            panAlways0.Children.Insert(0, canvas);
-                            System.Windows.Media.CompositionTarget.Rendering -= OnRenderingReposition;
-                            System.Windows.Media.CompositionTarget.Rendering += OnRenderingReposition;
-                            DebugLog("fallback: canvas on PanAlways + Rendering sync");
-                        }
-                    }
+                    var state = MakeState(loaderCombo, host, canvas, cbDeps, page, row, sortCombo);
+                    canvas.Tag = state;
+                    row.Tag = state;
+                    AddState(state);
+                    canvas.Loaded += OnCanvasLoaded;
+
+                    if (!ReferenceEquals(host, panAlways))
+                        ((Panel)host).Children.Add(canvas);
+                    else
+                        panAlways.Children.Insert(0, canvas);
+
+                    // 每帧同步所有可见组：RenderTransform 动画不触发布局，
+                    // 且切回任意页面时下一帧就能把位置算回来（位置变化可逆）。
+                    System.Windows.Media.CompositionTarget.Rendering -= OnRenderingReposition;
+                    System.Windows.Media.CompositionTarget.Rendering += OnRenderingReposition;
+                    SyncState(state);
                 }
                 else
                 {
@@ -362,16 +416,14 @@ namespace PCL
                     bool inserted = false;
                     if (sortCombo != null)
                     {
-                        var items = target.Children;
-                        int idx = items.IndexOf(sortCombo);
-                        if (idx >= 0)
-                        {
-                            items.Insert(idx + 1, row);
-                            inserted = true;
-                        }
+                        int idx = target.Children.IndexOf(sortCombo);
+                        if (idx >= 0) { target.Children.Insert(idx + 1, row); inserted = true; }
                     }
                     if (!inserted) target.Children.Add(row);
-                    DebugLog("injected into " + target.GetType().Name + (inserted ? " after sort combo" : " (append)"));
+                    var st1 = MakeState(loaderCombo, target, null, cbDeps, page, row, sortCombo);
+                    row.Tag = st1;
+                    AddState(st1);
+                    SyncState(st1);
                 }
             }
             catch (Exception ex) { DebugLog("SetupCheckBoxes FAILED: " + ex.GetType().Name + ": " + ex.Message); }
@@ -420,23 +472,22 @@ namespace PCL
             return null;
         }
 
-        // 兜底路径：卡片做 RenderTransform 动画时不产生布局更新，
-        // 只能在每个渲染帧重算浮层坐标，让按钮跟着卡片一起移动。
+        // 每帧同步：遍历所有注入组，只处理仍加载且可见的组。
+        // 不再依赖「最后一次注入」的全局单值，切回任意页面都能把位置算回来。
         private static void OnRenderingReposition(object sender, EventArgs e)
         {
             try
             {
-                var canvas = _pendingCanvas as System.Windows.Controls.Canvas;
-                var lc = _pendingLoader as FrameworkElement;
-                var host = _pendingPan as FrameworkElement;
-                if (canvas == null || lc == null || host == null || canvas.Children.Count == 0) return;
-                if (!canvas.IsLoaded)
+                var arr = GetStates();
+                if (arr == null) return;
+                for (int i = 0; i < arr.Length; i++)
                 {
-                    System.Windows.Media.CompositionTarget.Rendering -= OnRenderingReposition;
-                    return;
+                    var state = arr[i] as object[];
+                    if (state == null || state.Length < 7) continue;
+                    var canvas = state[2] as FrameworkElement;
+                    if (canvas == null || !canvas.IsLoaded || !canvas.IsVisible) continue;
+                    RepositionState(state);
                 }
-                var row = canvas.Children[0] as FrameworkElement;
-                if (row != null) RepositionRow(row, lc, host);
             }
             catch { }
         }
