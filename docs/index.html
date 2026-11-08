@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Issue 导航 · PCL Professional-Next</title>
+<meta name="description" content="PCL Professional-Next 的 Issue 入口：新功能投稿、项目欢迎、Bug 反馈。">
+<style>
+  :root {
+    --ink: #22303f;
+    --ink-soft: #5d6c7c;
+    --line: #e3e9f1;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", sans-serif;
+    background:
+      radial-gradient(1100px 520px at 12% -8%, #eaf3ff 0%, rgba(234,243,255,0) 70%),
+      radial-gradient(900px 480px at 92% 4%, #f3ecff 0%, rgba(243,236,255,0) 70%),
+      #f8fafc;
+  }
+  .wrap { max-width: 1140px; margin: 0 auto; padding: 64px 26px 48px; }
+  .hero { text-align: center; margin-bottom: 40px; }
+  .eyebrow {
+    display: inline-block; padding: 6px 14px; border-radius: 999px;
+    font-size: 12px; letter-spacing: .12em; font-weight: 700;
+    color: #6b5aa8; background: #f0ebfb; border: 1px solid #e2d8f7;
+  }
+  h1 { margin: 18px 0 10px; font-size: clamp(28px, 4vw, 40px); letter-spacing: -.02em; }
+  .hero p { margin: 0; color: var(--ink-soft); font-size: 15px; line-height: 1.8; }
+
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 22px;
+    align-items: stretch;
+  }
+  .card {
+    position: relative;
+    display: flex; flex-direction: column;
+    min-height: 330px;
+    padding: 30px 28px 26px;
+    border-radius: 24px;
+    border: 1px solid transparent;
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    transition: transform .22s ease, box-shadow .22s ease;
+  }
+  .card::before, .card::after {
+    content: ""; position: absolute; border-radius: 50%;
+    pointer-events: none;
+  }
+  .card::before { width: 190px; height: 190px; right: -64px; top: -78px; background: rgba(255,255,255,.48); }
+  .card::after  { width: 130px; height: 130px; left: -58px; bottom: -70px; background: rgba(255,255,255,.34); }
+  .card:hover { transform: translateY(-7px); box-shadow: 0 18px 40px rgba(40, 62, 92, .13); }
+  .card:focus-visible { outline: 3px solid #7c8cff; outline-offset: 3px; }
+
+  .card--feature {
+    background: linear-gradient(155deg, #ecf5ff 0%, #deecff 58%, #d2e5ff 100%);
+    border-color: #c2dcfa;
+    --accent: #2568bd;
+  }
+  .card--welcome {
+    background: linear-gradient(135deg, #fff0f6 0%, #fff3e6 28%, #f1f9e9 60%, #eaf1ff 100%);
+    border-color: #ecdef3;
+    --accent: #7d5bb2;
+  }
+  .card--welcome::before { background: rgba(255,255,255,.42); }
+  .card--welcome::after  { background: rgba(255,231,244,.55); }
+  .card--bug {
+    background: linear-gradient(155deg, #ecfaf1 0%, #def4e6 58%, #d2efdd 100%);
+    border-color: #c3e8d1;
+    --accent: #2b8b57;
+  }
+
+  .badge {
+    align-self: flex-start;
+    position: relative; z-index: 1;
+    padding: 4px 11px; border-radius: 999px;
+    font-size: 11px; font-weight: 700; letter-spacing: .05em;
+    color: var(--accent);
+    background: rgba(255,255,255,.72);
+    border: 1px solid rgba(255,255,255,.9);
+  }
+  .emoji {
+    position: relative; z-index: 1;
+    margin-top: 22px;
+    width: 70px; height: 70px;
+    display: grid; place-items: center;
+    font-size: 38px; line-height: 1;
+    border-radius: 20px;
+    background: rgba(255,255,255,.66);
+    box-shadow: 0 6px 18px rgba(60, 80, 110, .07);
+  }
+  .card h2 {
+    position: relative; z-index: 1;
+    margin: 20px 0 8px;
+    font-size: 21px; line-height: 1.45; letter-spacing: -.01em;
+  }
+  .card--welcome h2 { font-size: 19px; }
+  .card .desc {
+    position: relative; z-index: 1;
+    margin: 0; font-size: 13.5px; line-height: 1.8; color: #4d6072;
+  }
+  .cta {
+    position: relative; z-index: 1;
+    margin-top: auto; padding-top: 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 13px; font-weight: 700; color: var(--accent);
+  }
+  .cta .arrow {
+    display: grid; place-items: center;
+    width: 30px; height: 30px; border-radius: 50%;
+    background: rgba(255,255,255,.78);
+    font-size: 15px;
+    transition: transform .22s ease;
+  }
+  .card:hover .cta .arrow { transform: translateX(4px); }
+
+  .footer {
+    margin-top: 34px; text-align: center;
+    font-size: 13px; color: var(--ink-soft); line-height: 1.9;
+  }
+  .footer a { color: #3f6fb5; text-decoration: none; border-bottom: 1px solid #bcd4f0; }
+  .footer a:hover { color: #25518f; }
+  @media (max-width: 860px) {
+    .wrap { padding-top: 42px; }
+    .cards { grid-template-columns: 1fr; gap: 16px; }
+    .card { min-height: 240px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .card, .cta .arrow { transition: none; }
+    .card:hover { transform: none; }
+  }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header class="hero">
+    <span class="eyebrow">PCL PROFESSIONAL-NEXT · ISSUE CENTER</span>
+    <h1>选一张卡片，告诉我们你的想法</h1>
+    <p>PCL Pro-N 是社区「二改的二改」分支，由 CCief 个人维护。投稿、报错、或者只是来逛逛，都从这里开始。</p>
+  </header>
+
+  <section class="cards" aria-label="Issue 入口">
+    <a class="card card--feature" href="https://github.com/CCief/PCL-Professional-Next/issues/new?template=01-feature.yml">
+      <span class="badge">功能 / 建议</span>
+      <div class="emoji" aria-hidden="true">📫</div>
+      <h2>新功能投稿栏</h2>
+      <p class="desc">想加什么功能、想改哪处体验？把场景和期望写进来，我们会按类型跟进。</p>
+      <span class="cta">提交新功能 <span class="arrow" aria-hidden="true">→</span></span>
+    </a>
+
+    <a class="card card--welcome" href="https://github.com/CCief/PCL-Professional-Next#readme">
+      <span class="badge">先读这里</span>
+      <div class="emoji" aria-hidden="true">🎉</div>
+      <h2>欢迎来到 PCL Professional-Next！</h2>
+      <p class="desc">项目定位、特色功能、血统说明与最新版本下载，第一次来建议先看一眼。</p>
+      <span class="cta">了解这个项目 <span class="arrow" aria-hidden="true">→</span></span>
+    </a>
+
+    <a class="card card--bug" href="https://github.com/CCief/PCL-Professional-Next/issues/new?template=02-bug.yml">
+      <span class="badge">问题 / 崩溃</span>
+      <div class="emoji" aria-hidden="true">🐛</div>
+      <h2>Bug 反馈栏</h2>
+      <p class="desc">崩了、下载失败、界面错位？带上版本号和复现步骤，修起来会快很多。</p>
+      <span class="cta">报告一个 Bug <span class="arrow" aria-hidden="true">→</span></span>
+    </a>
+  </section>
+
+  <footer class="footer">
+    提交前可以先 <a href="https://github.com/CCief/PCL-Professional-Next/issues?q=is%3Aissue">搜一下已有 Issue</a>，避免重复。<br>
+    PCL Professional-Next · GPL-3.0 · 与上游 PCL2 / PCL Pro 作者无隶属关系
+  </footer>
+</main>
+</body>
+</html>

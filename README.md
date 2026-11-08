@@ -6,6 +6,12 @@ PCL Pro-N 是 [Plain Craft Launcher 2](https://github.com/Hex-Dragon/PCL2) 的�
 
 当前版本：**v0.1.0-alpha**（第一个预发行版）
 
+## 🗂️ Issue 导航
+
+[![📫 新功能投稿栏](docs/cards/feature.svg)](https://github.com/CCief/PCL-Professional-Next/issues/new?template=01-feature.yml) [![🎉 欢迎来到 PCL Professional-Next！](docs/cards/welcome.svg)](https://github.com/CCief/PCL-Professional-Next#readme) [![🐛 Bug 反馈栏](docs/cards/bug.svg)](https://github.com/CCief/PCL-Professional-Next/issues/new?template=02-bug.yml)
+
+三张卡片从左到右分别是 **淡蓝 · 新功能投稿**、**淡彩 · 项目欢迎**、**淡绿 · Bug 反馈**。也可以打开 [卡片式 Issue 导航页](https://ccief.github.io/PCL-Professional-Next/) 查看横排大卡片视图；提交前建议先搜一下[已有 Issue](https://github.com/CCief/PCL-Professional-Next/issues?q=is%3Aissue)。
+
 ## ⚠️ 项目定位：先把血统讲清楚
 
 ```

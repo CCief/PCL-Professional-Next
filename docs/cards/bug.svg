@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="170" viewBox="0 0 320 170" role="img" aria-label="Bug 反馈栏">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ecfaf1"/>
+      <stop offset="0.58" stop-color="#def4e6"/>
+      <stop offset="1" stop-color="#d2efdd"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="316" height="166" rx="20" fill="url(#bg)" stroke="#c3e8d1" stroke-width="2"/>
+  <circle cx="286" cy="30" r="58" fill="#ffffff" opacity="0.42"/>
+  <circle cx="30" cy="166" r="42" fill="#ffffff" opacity="0.28"/>
+  <text x="26" y="63" font-size="36" font-family="Segoe UI Emoji, Apple Color Emoji, sans-serif">&#128027;</text>
+  <text x="26" y="103" font-size="21" font-weight="700" fill="#1f6f45" font-family="Microsoft YaHei, PingFang SC, sans-serif">Bug 反馈栏</text>
+  <text x="26" y="132" font-size="13" fill="#427d5c" font-family="Microsoft YaHei, PingFang SC, sans-serif">崩了？把复现步骤贴进来 →</text>
+</svg>

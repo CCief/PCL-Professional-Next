@@ -1,0 +1,93 @@
+name: "🐛 Bug 反馈栏"
+description: "报告崩溃、下载失败、界面异常等问题"
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        报 Bug 请尽量带上**版本号**和**复现步骤**；如果启动器弹出了错误框，把完整报错文字或截图一起贴上来，定位会快很多。
+
+        > 本仓库是反编译重建的逆向研究分支，部分问题可能来自上游内核，我们会说明能否在本分支内修复。
+
+  - type: input
+    id: version
+    attributes:
+      label: "启动器版本"
+      description: "文件名里的版本即可"
+      placeholder: "v0.1.0-alpha"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: "操作系统"
+      options:
+        - "Windows 11"
+        - "Windows 10"
+        - "Windows 8.1 / 7"
+        - "其他 / 不确定"
+      default: 0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: "问题出现的位置"
+      options:
+        - "启动 / 启动器打不开"
+        - "下载页 / 模组搜索"
+        - "快捷下载 / 自动前置"
+        - "版本 / 加载器匹配"
+        - "界面显示 / 控件错位"
+        - "启动游戏 / 游戏内"
+        - "其他"
+      default: 0
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: "复现步骤"
+      description: "从打开启动器开始，一步步写下来"
+      placeholder: |
+        1. 打开下载页
+        2. 切到 Mod 分类
+        3. 点击……
+    validations:
+      required: true
+
+  - type: textarea
+    id: expect
+    attributes:
+      label: "期望行为"
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: "实际行为 / 报错内容"
+      description: "可粘贴错误框文字，或拖入截图"
+    validations:
+      required: true
+
+  - type: textarea
+    id: log
+    attributes:
+      label: "日志（可选）"
+      description: "启动器目录下的 PCL\\Log 中对应日志"
+      render: shell
+
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: "提交前确认"
+      options:
+        - label: "我已搜索过已有 Issue，确认不是重复反馈"
+          required: true
+        - label: "我已确认使用的是本分支的发行版，而非上游 PCL2 / PCL Pro"
+          required: true
