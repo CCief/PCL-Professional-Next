@@ -12,7 +12,7 @@ PCL Pro-N 是 [Plain Craft Launcher 2](https://github.com/Hex-Dragon/PCL2) 的�
 
 三张卡片从左到右分别是 **淡蓝 · 新功能投稿**、**淡彩 · 项目欢迎**、**淡绿 · Bug 反馈**。也可以打开 [卡片式 Issue 导航页](https://ccief.github.io/PCL-Professional-Next/) 查看横排大卡片视图；提交前建议先搜一下[已有 Issue](https://github.com/CCief/PCL-Professional-Next/issues?q=is%3Aissue)。
 
-**Issues 列表页本身**：这三个入口已经做成置顶 Issue（#2 / #3 / #4），打开 [Issues](https://github.com/CCief/PCL-Professional-Next/issues) 就能在列表上方看到横排的三张卡片。GitHub 不允许仓库自定义该页的背景色，所以原生置顶卡片是主题色（白/黑）；想看到精确配色的淡蓝 / 淡彩 / 淡绿卡片，有两种方式：[一键启动器](tools/Open-Issue-Cards.bat)（Edge，无需安装）或安装 [Issue 卡片入口扩展](tools/issue-cards-extension/README.md)（Chrome/Edge，一次装好长期生效，仅作用于本仓库的 Issues 页，卸载即恢复）。
+**Issues 列表页本身**：这三个入口已经做成置顶 Issue（#2 / #3 / #4），打开 [Issues](https://github.com/CCief/PCL-Professional-Next/issues) 就能在列表上方看到横排的三张卡片。GitHub 不允许仓库自定义该页的样式，所以置顶卡片的背景只能跟随 GitHub 主题色；淡蓝 / 淡彩 / 淡绿配色的完整卡片请看上面的卡片行或 [卡片式 Issue 导航页](https://ccief.github.io/PCL-Professional-Next/)。
 
 ## ⚠️ 项目定位：先把血统讲清楚
 
