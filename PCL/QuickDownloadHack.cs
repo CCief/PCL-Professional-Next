@@ -268,7 +268,9 @@ namespace PCL
                     if (c != null && c.IsLoaded && c.IsVisible && c.ActualWidth > 10) anchor = c;
                 }
                 if (anchor == null) return;
-                RepositionRow(row, anchor, host);
+                // 最右侧的刷新按钮是「右边界守卫」：按钮行不能压到它上面
+                var guard = state.Length > 8 ? state[8] as FrameworkElement : null;
+                RepositionRow(row, anchor, host, guard);
             }
             catch { }
         }
@@ -302,7 +304,9 @@ namespace PCL
             catch { }
         }
 
-        private static void RepositionRow(FrameworkElement row, FrameworkElement lc, FrameworkElement pa)
+        // rightGuard = 筛选条最右侧的刷新按钮（BtnSearchReset），可为 null。
+        private static void RepositionRow(FrameworkElement row, FrameworkElement lc, FrameworkElement pa,
+                                          FrameworkElement rightGuard)
         {
             try
             {
@@ -322,9 +326,21 @@ namespace PCL
 
                 double w = lc.ActualWidth > 10 ? lc.ActualWidth : 90;
                 double targetLeft = pt.X + w + 7;
-                // 硬边界：按钮行的右边缘必须留在宿主卡片内（右边留 12px，左边至少 8px）。
-                // 这一条专治「折叠 loader 后 * 列把排序下拉推到右侧，按钮被画到边框外」。
-                double maxLeft = hostW - rowW - 12;
+                // 硬边界不能取「卡片右边缘」：那里正是 BtnSearchReset（圆形刷新图标）/
+                // BtnSearchInstallModPack 的位置，贴过去会把「快捷下载」文字压在图标上。
+                // 正确上限是刷新按钮左边缘再留 6px（按钮行右边缘 <= 该值）。
+                double rightLimit = hostW - 12;
+                if (rightGuard != null)
+                {
+                    var rp = rightGuard.TranslatePoint(new Point(0, 0), pa);
+                    if (!double.IsNaN(rp.X) && !double.IsInfinity(rp.X) &&
+                        rp.X > 0 && rp.X < hostW * 1.5)
+                    {
+                        double guardLimit = rp.X - 6;
+                        if (guardLimit < rightLimit) rightLimit = guardLimit;
+                    }
+                }
+                double maxLeft = rightLimit - rowW;
                 if (maxLeft < 8) maxLeft = 8;
                 if (targetLeft > maxLeft) targetLeft = maxLeft;
                 if (targetLeft < 8) targetLeft = 8;
