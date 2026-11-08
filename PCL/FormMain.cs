@@ -1634,7 +1634,7 @@ public class FormMain : Window, IComponentConnector
 		//IL_03c5: Expected O, but got Unknown
 		//IL_03e6: Unknown result type (might be due to invalid IL or missing references)
 		//IL_03f6: Expected O, but got Unknown
-		ModMain.MyMsgBox("本项目为社区自发维护的开源分支（Non-official Community Edition），由 SomeBudings（新芽）二次开发并更名为 PCL Pro-N，不代表 PCL Pro-N 原作者龙腾猫跃及 PCL2 官方开发者立场。\n\n软件完全免费，仅供交流学习使用。", "免责声明", "确定", "", "", IsWarn: false, HighLight: false);
+		ModMain.MyMsgBox("本项目为社区自发维护的开源分支（Non-official Community Edition），由 CCief 二次开发并更名为 PCL Pro-N，不代表 PCL Pro-N 原作者龙腾猫跃及 PCL2 官方开发者立场。\n\n软件完全免费，仅供交流学习使用。", "免责声明", "确定", "", "", IsWarn: false, HighLight: false);
 		PCLVerCompat.SetProBadge(this);
 		ModBase.ApplicationStartTick = TimeUtils.GetTimeTick();
 		ModBase.FrmHandle = new WindowInteropHelper((Window)(object)this).Handle;

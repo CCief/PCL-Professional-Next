@@ -318,12 +318,14 @@ namespace PCL
 
                 CleanBadPrefixMods();
 
-                // 两个 CheckBox 放进水平 StackPanel，作为 PanAlways 的独立一行。
-                // 右对齐 + 右边距 12 与卡片右缘对齐；上下留白让它不与筛选条同一行。
+                // 两个 CheckBox 放进水平 StackPanel：贴在筛选条卡片内部右下角，
+                // 与「版本 / 加载器」同一行，右留 12px、下留 4px。
+                // 不新增行、不新增卡片/背景，卡片原生白底直接承载。
                 var row = new StackPanel();
                 row.Orientation = Orientation.Horizontal;
                 row.HorizontalAlignment = HorizontalAlignment.Right;
-                row.Margin = new Thickness(0, 4, 12, 2);
+                row.VerticalAlignment = VerticalAlignment.Bottom;
+                row.Margin = new Thickness(0, 0, 12, 4);
 
                 var cbQuick = new MyCheckBox();
                 cbQuick.Text = "快捷下载";
@@ -340,7 +342,12 @@ namespace PCL
                 cbDeps.Visibility = Visibility.Collapsed;   // 由 SyncState 按本组 page 决定
                 row.Children.Add(cbDeps);
 
-                // 筛选条 MyCard：既是动画同步源，也是「插入到它下方」的定位依据。
+                // 找筛选条 MyCard（Grid 派生），把按钮行作为它的子项加进去。
+                // MyCard 自身没有行列定义，所有子项默认铺满整个卡片；
+                // 设右下对齐后，按钮正好落在第二行（版本 / 加载器）右侧的空白里，
+                // 与筛选控件同一行、不新增行、不影响内容 Grid 的 7 列宽度分配。
+                // 卡片整体 RenderTransform 的入场动画会自然带着按钮一起动，
+                // 所以 state[0] 传 null 关闭额外的动画位移复制（否则会双倍）。
                 var sortCombo = GetProperty(page, "ComboSearchSort") as FrameworkElement;
                 var loaderCombo = GetProperty(page, "ComboSearchLoader") as FrameworkElement;
                 var shaderCombo = GetProperty(page, "ComboSearchShaderLoader") as FrameworkElement;
@@ -348,18 +355,18 @@ namespace PCL
                 FrameworkElement card = FindHostCard(sortCombo) ?? FindHostCard(loaderCombo)
                                         ?? FindHostCard(shaderCombo) ?? FindHostCard(resetBtn);
 
-                // 插入位置：筛选条卡片在 PanAlways 里的直接子项之后。
-                // pagecomp.baml 里 PanAlways 是垂直 StackPanel，筛选条 MyCard 之后紧跟内容区。
-                int insertAt = -1;
-                if (card != null)
+                bool insideCard = false;
+                var cardPanel = card as Panel;
+                if (cardPanel != null)
                 {
-                    int ci = FindChildIndex(panAlways, card);
-                    if (ci >= 0) insertAt = ci + 1;
+                    cardPanel.Children.Add(row);
+                    insideCard = true;
                 }
-                if (insertAt < 0)
+                else
                 {
-                    // 兜底 1：内容区容器之前。注意 PanResults 并不存在（PageComp.cs 里只有
-                    // PanContent / CardProjects），旧代码那条兜底一直是无效的。
+                    // 极端兜底（视觉树结构异常）：仍放进 PanAlways 的筛选条卡片之后，
+                    // 不新增背景、不新增卡片；此时需要同步卡片入场位移。
+                    int insertAt = -1;
                     var pr = GetProperty(page, "PanContent") as FrameworkElement
                              ?? GetProperty(page, "CardProjects") as FrameworkElement;
                     if (pr != null)
@@ -367,21 +374,21 @@ namespace PCL
                         int k = panAlways.Children.IndexOf(pr);
                         if (k >= 0) insertAt = k;
                     }
-                }
-                if (insertAt < 0)
-                {
-                    // 兜底 2：PanAlways 里类型名为 MyCard 的第一个子项就是筛选条卡片
-                    for (int k = 0; k < panAlways.Children.Count; k++)
+                    if (insertAt < 0)
                     {
-                        var c = panAlways.Children[k] as FrameworkElement;
-                        if (c != null && c.GetType().Name == "MyCard") { insertAt = k + 1; break; }
+                        for (int k = 0; k < panAlways.Children.Count; k++)
+                        {
+                            var c = panAlways.Children[k] as FrameworkElement;
+                            if (c != null && c.GetType().Name == "MyCard") { insertAt = k + 1; break; }
+                        }
                     }
+                    if (insertAt < 0) insertAt = 0;
+                    if (insertAt > panAlways.Children.Count) insertAt = panAlways.Children.Count;
+                    panAlways.Children.Insert(insertAt, row);
                 }
-                if (insertAt < 0) insertAt = 0;
-                if (insertAt > panAlways.Children.Count) insertAt = panAlways.Children.Count;
-                panAlways.Children.Insert(insertAt, row);
 
-                var state = MakeState(card, panAlways, null, cbDeps, page, row, sortCombo, shaderCombo, resetBtn);
+                var state = MakeState(insideCard ? null : card, panAlways, null, cbDeps, page,
+                                      row, sortCombo, shaderCombo, resetBtn);
                 row.Tag = state;
                 AddState(state);
                 row.Loaded += OnRowLoaded;
