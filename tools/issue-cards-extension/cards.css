@@ -1,0 +1,151 @@
+/* PCL Professional-Next · Issue 三卡片入口
+   只在 CCief/PCL-Professional-Next 的 Issues 列表页生效。 */
+
+/* 扩展已提供精确配色的卡片，隐藏 GitHub 原生置顶卡片避免重复 */
+ul[aria-label*="pinned issues" i] {
+  display: none !important;
+}
+
+#pcln-issue-card-row {
+  margin: 18px 0 22px !important;
+  padding: 0 !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif !important;
+  color: #22303f !important;
+}
+
+#pcln-issue-card-row * {
+  box-sizing: border-box !important;
+}
+
+#pcln-issue-card-row .pcln-wrap {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 16px !important;
+}
+
+#pcln-issue-card-row a.pcln-card {
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 178px !important;
+  overflow: hidden !important;
+  padding: 18px 20px 16px !important;
+  border: 1px solid transparent !important;
+  border-radius: 18px !important;
+  text-decoration: none !important;
+  color: #22303f !important;
+  transition: transform .2s ease, box-shadow .2s ease !important;
+}
+
+#pcln-issue-card-row a.pcln-card:hover {
+  text-decoration: none !important;
+  transform: translateY(-4px) !important;
+  box-shadow: 0 14px 30px rgba(40, 62, 92, .14) !important;
+}
+
+#pcln-issue-card-row a.pcln-card::before {
+  content: "" !important;
+  position: absolute !important;
+  top: -70px !important;
+  right: -60px !important;
+  width: 170px !important;
+  height: 170px !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, .42) !important;
+  pointer-events: none !important;
+}
+
+#pcln-issue-card-row a.pcln-feature {
+  background: linear-gradient(155deg, #ecf5ff 0%, #deecff 58%, #d2e5ff 100%) !important;
+  border-color: #c2dcfa !important;
+  --pcln-accent: #2568bd !important;
+}
+#pcln-issue-card-row a.pcln-welcome {
+  background: linear-gradient(135deg, #fff0f6 0%, #fff3e6 28%, #f1f9e9 60%, #eaf1ff 100%) !important;
+  border-color: #ecdef3 !important;
+  --pcln-accent: #7d5bb2 !important;
+}
+#pcln-issue-card-row a.pcln-bug {
+  background: linear-gradient(155deg, #ecfaf1 0%, #def4e6 58%, #d2efdd 100%) !important;
+  border-color: #c3e8d1 !important;
+  --pcln-accent: #2b8b57 !important;
+}
+
+#pcln-issue-card-row .pcln-badge {
+  align-self: flex-start !important;
+  position: relative !important;
+  padding: 3px 10px !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: .04em !important;
+  color: var(--pcln-accent) !important;
+  background: rgba(255, 255, 255, .74) !important;
+}
+
+#pcln-issue-card-row .pcln-main {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  margin-top: 14px !important;
+  position: relative !important;
+}
+
+#pcln-issue-card-row .pcln-emoji {
+  display: grid !important;
+  place-items: center !important;
+  flex: 0 0 44px !important;
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 13px !important;
+  font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif !important;
+  font-size: 26px !important;
+  line-height: 1 !important;
+  background: rgba(255, 255, 255, .68) !important;
+}
+
+#pcln-issue-card-row .pcln-title {
+  font-size: 17px !important;
+  font-weight: 700 !important;
+  line-height: 1.45 !important;
+  color: #1f2c3b !important;
+}
+
+#pcln-issue-card-row .pcln-desc {
+  margin-top: 10px !important;
+  position: relative !important;
+  font-size: 12.5px !important;
+  line-height: 1.7 !important;
+  color: #4d6072 !important;
+}
+
+#pcln-issue-card-row .pcln-cta {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  margin-top: auto !important;
+  padding-top: 12px !important;
+  position: relative !important;
+  font-size: 12.5px !important;
+  font-weight: 700 !important;
+  color: var(--pcln-accent) !important;
+}
+
+#pcln-issue-card-row .pcln-arrow {
+  display: grid !important;
+  place-items: center !important;
+  width: 26px !important;
+  height: 26px !important;
+  border-radius: 50% !important;
+  font-size: 13px !important;
+  background: rgba(255, 255, 255, .8) !important;
+}
+
+@media (max-width: 900px) {
+  #pcln-issue-card-row .pcln-wrap {
+    grid-template-columns: 1fr !important;
+  }
+  #pcln-issue-card-row a.pcln-card {
+    min-height: 150px !important;
+  }
+}
