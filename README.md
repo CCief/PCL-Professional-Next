@@ -4,7 +4,7 @@
 
 PCL Pro-N 是 [Plain Craft Launcher 2](https://github.com/Hex-Dragon/PCL2) 的一条远端衍生分支，核心目标是**让下载更简单**：快捷下载、自动安装前置模组、一键匹配版本与加载器。本仓库 `PCL-Professional-Next` 是它的源码仓库。
 
-当前版本：**v1.0.8-beta**
+当前版本：**v0.1.0-alpha**（第一个预发行版）
 
 ## ⚠️ 项目定位：先把血统讲清楚
 
