@@ -3,179 +3,212 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Issue 导航 · PCL Professional-Next</title>
-<meta name="description" content="PCL Professional-Next 的 Issue 入口：新功能投稿、项目欢迎、Bug 反馈。">
-<style>
-  :root {
-    --ink: #22303f;
-    --ink-soft: #5d6c7c;
-    --line: #e3e9f1;
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    min-height: 100vh;
-    color: var(--ink);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", sans-serif;
-    background:
-      radial-gradient(1100px 520px at 12% -8%, #eaf3ff 0%, rgba(234,243,255,0) 70%),
-      radial-gradient(900px 480px at 92% 4%, #f3ecff 0%, rgba(243,236,255,0) 70%),
-      #f8fafc;
-  }
-  .wrap { max-width: 1140px; margin: 0 auto; padding: 64px 26px 48px; }
-  .hero { text-align: center; margin-bottom: 40px; }
-  .eyebrow {
-    display: inline-block; padding: 6px 14px; border-radius: 999px;
-    font-size: 12px; letter-spacing: .12em; font-weight: 700;
-    color: #6b5aa8; background: #f0ebfb; border: 1px solid #e2d8f7;
-  }
-  h1 { margin: 18px 0 10px; font-size: clamp(28px, 4vw, 40px); letter-spacing: -.02em; }
-  .hero p { margin: 0; color: var(--ink-soft); font-size: 15px; line-height: 1.8; }
-
-  .cards {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 22px;
-    align-items: stretch;
-  }
-  .card {
-    position: relative;
-    display: flex; flex-direction: column;
-    min-height: 330px;
-    padding: 30px 28px 26px;
-    border-radius: 24px;
-    border: 1px solid transparent;
-    overflow: hidden;
-    text-decoration: none;
-    color: inherit;
-    transition: transform .22s ease, box-shadow .22s ease;
-  }
-  .card::before, .card::after {
-    content: ""; position: absolute; border-radius: 50%;
-    pointer-events: none;
-  }
-  .card::before { width: 190px; height: 190px; right: -64px; top: -78px; background: rgba(255,255,255,.48); }
-  .card::after  { width: 130px; height: 130px; left: -58px; bottom: -70px; background: rgba(255,255,255,.34); }
-  .card:hover { transform: translateY(-7px); box-shadow: 0 18px 40px rgba(40, 62, 92, .13); }
-  .card:focus-visible { outline: 3px solid #7c8cff; outline-offset: 3px; }
-
-  .card--feature {
-    background: linear-gradient(155deg, #ecf5ff 0%, #deecff 58%, #d2e5ff 100%);
-    border-color: #c2dcfa;
-    --accent: #2568bd;
-  }
-  .card--welcome {
-    background: linear-gradient(135deg, #fff0f6 0%, #fff3e6 28%, #f1f9e9 60%, #eaf1ff 100%);
-    border-color: #ecdef3;
-    --accent: #7d5bb2;
-  }
-  .card--welcome::before { background: rgba(255,255,255,.42); }
-  .card--welcome::after  { background: rgba(255,231,244,.55); }
-  .card--bug {
-    background: linear-gradient(155deg, #ecfaf1 0%, #def4e6 58%, #d2efdd 100%);
-    border-color: #c3e8d1;
-    --accent: #2b8b57;
-  }
-
-  .badge {
-    align-self: flex-start;
-    position: relative; z-index: 1;
-    padding: 4px 11px; border-radius: 999px;
-    font-size: 11px; font-weight: 700; letter-spacing: .05em;
-    color: var(--accent);
-    background: rgba(255,255,255,.72);
-    border: 1px solid rgba(255,255,255,.9);
-  }
-  .emoji {
-    position: relative; z-index: 1;
-    margin-top: 22px;
-    width: 70px; height: 70px;
-    display: grid; place-items: center;
-    font-size: 38px; line-height: 1;
-    border-radius: 20px;
-    background: rgba(255,255,255,.66);
-    box-shadow: 0 6px 18px rgba(60, 80, 110, .07);
-  }
-  .card h2 {
-    position: relative; z-index: 1;
-    margin: 20px 0 8px;
-    font-size: 21px; line-height: 1.45; letter-spacing: -.01em;
-  }
-  .card--welcome h2 { font-size: 19px; }
-  .card .desc {
-    position: relative; z-index: 1;
-    margin: 0; font-size: 13.5px; line-height: 1.8; color: #4d6072;
-  }
-  .cta {
-    position: relative; z-index: 1;
-    margin-top: auto; padding-top: 24px;
-    display: flex; align-items: center; justify-content: space-between;
-    font-size: 13px; font-weight: 700; color: var(--accent);
-  }
-  .cta .arrow {
-    display: grid; place-items: center;
-    width: 30px; height: 30px; border-radius: 50%;
-    background: rgba(255,255,255,.78);
-    font-size: 15px;
-    transition: transform .22s ease;
-  }
-  .card:hover .cta .arrow { transform: translateX(4px); }
-
-  .footer {
-    margin-top: 34px; text-align: center;
-    font-size: 13px; color: var(--ink-soft); line-height: 1.9;
-  }
-  .footer a { color: #3f6fb5; text-decoration: none; border-bottom: 1px solid #bcd4f0; }
-  .footer a:hover { color: #25518f; }
-  @media (max-width: 860px) {
-    .wrap { padding-top: 42px; }
-    .cards { grid-template-columns: 1fr; gap: 16px; }
-    .card { min-height: 240px; }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .card, .cta .arrow { transition: none; }
-    .card:hover { transform: none; }
-  }
-</style>
+<title>PCL Professional-Next · 官网</title>
+<meta name="description" content="PCL Professional-Next（PCL Pro-N）官网：Minecraft 启动器「二改的二改」，快捷下载、自动前置、版本匹配。查看发布通道、下载最新版本、提交功能建议与 Bug 反馈。">
+<meta name="theme-color" content="#f7f9fc">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%236aa6f0'/%3E%3Ctext x='32' y='45' font-size='38' font-weight='800' text-anchor='middle' fill='white' font-family='Arial'%3EP%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/site.css">
 </head>
-<body>
-<main class="wrap">
-  <header class="hero">
-    <span class="eyebrow">PCL PROFESSIONAL-NEXT · ISSUE CENTER</span>
-    <h1>选一张卡片，告诉我们你的想法</h1>
-    <p>PCL Pro-N 是社区「二改的二改」分支，由 CCief 个人维护。投稿、报错、或者只是来逛逛，都从这里开始。</p>
-  </header>
+<body id="top">
 
-  <section class="cards" aria-label="Issue 入口">
-    <a class="card card--feature" href="https://github.com/CCief/PCL-Professional-Next/issues/new?template=01-feature.yml">
-      <span class="badge">功能 / 建议</span>
-      <div class="emoji" aria-hidden="true">📫</div>
-      <h2>新功能投稿栏</h2>
-      <p class="desc">想加什么功能、想改哪处体验？把场景和期望写进来，我们会按类型跟进。</p>
-      <span class="cta">提交新功能 <span class="arrow" aria-hidden="true">→</span></span>
-    </a>
+<header class="topbar">
+  <div class="container nav-inner">
+    <a class="brand" href="#top"><span class="brand-mark">P</span><span>PCL <b>Pro-N</b></span></a>
+    <nav class="topnav" aria-label="站内导航">
+      <a href="#issues">Issue 导航</a>
+      <a href="#features">功能</a>
+      <a href="#channels">发布通道</a>
+      <a href="#download">下载</a>
+    </nav>
+    <a class="nav-gh" href="https://github.com/CCief/PCL-Professional-Next" target="_blank" rel="noopener">GitHub ↗</a>
+  </div>
+</header>
 
-    <a class="card card--welcome" href="https://github.com/CCief/PCL-Professional-Next#readme">
-      <span class="badge">先读这里</span>
-      <div class="emoji" aria-hidden="true">🎉</div>
-      <h2>欢迎来到<br>PCL Professional-Next！</h2>
-      <p class="desc">项目定位、特色功能、血统说明与最新版本下载，第一次来建议先看一眼。</p>
-      <span class="cta">了解这个项目 <span class="arrow" aria-hidden="true">→</span></span>
-    </a>
+<section class="hero">
+  <div class="container hero-grid">
+    <div class="hero-copy">
+      <span class="kicker">「二改的二改」· 社区衍生启动器</span>
+      <h1>下载，本该<br><em>更简单一点。</em></h1>
+      <p class="hero-lead">PCL Professional-Next 是在 PCL Pro（PCL2 的社区二改）之上再做增强的 Minecraft 启动器。快捷下载、自动装前置、按实例版本与加载器自动匹配文件——把找资源的时间还给游戏本身。</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="#download">下载 v0.1.0-alpha ↓</a>
+        <a class="btn btn-ghost" href="https://github.com/CCief/PCL-Professional-Next/releases/tag/v0.1.0-alpha" target="_blank" rel="noopener">查看发布说明 ↗</a>
+      </div>
+      <div class="hero-meta">
+        <span>单文件 exe</span><span>无需安装 .NET 8</span><span>免费开源 · GPL-3.0</span>
+      </div>
+    </div>
 
-    <a class="card card--bug" href="https://github.com/CCief/PCL-Professional-Next/issues/new?template=02-bug.yml">
-      <span class="badge">问题 / 崩溃</span>
-      <div class="emoji" aria-hidden="true">🐛</div>
-      <h2>Bug 反馈栏</h2>
-      <p class="desc">崩了、下载失败、界面错位？带上版本号和复现步骤，修起来会快很多。</p>
-      <span class="cta">报告一个 Bug <span class="arrow" aria-hidden="true">→</span></span>
-    </a>
-  </section>
+    <aside class="version-panel" aria-label="当前版本信息">
+      <div class="vp-head"><span class="vp-dot"></span> 当前版本</div>
+      <div class="vp-version">v0.1.0-alpha</div>
+      <span class="vp-channel">Alpha 通道 · 预发行版</span>
+      <div class="vp-rows">
+        <div><span>发布通道</span><b>Alpha</b></div>
+        <div><span>文件大小</span><b>13,068,714 B</b></div>
+        <div><span>发布日期</span><b>2026-11-08</b></div>
+        <div><span>维护者</span><b>CCief</b></div>
+      </div>
+      <div class="vp-hash">SHA-256<code>619d8c638ca6ce2747c12088194e284db9afc408758171855b00f1b56c29e407</code></div>
+    </aside>
+  </div>
+</section>
 
-  <footer class="footer">
-    提交前可以先 <a href="https://github.com/CCief/PCL-Professional-Next/issues?q=is%3Aissue">搜一下已有 Issue</a>，避免重复。<br>
-    PCL Professional-Next · GPL-3.0 · 与上游 PCL2 / PCL Pro 作者无隶属关系
-  </footer>
-</main>
+<section class="section" id="issues">
+  <div class="container">
+    <div class="section-head">
+      <span class="sec-tag">ISSUE CENTER</span>
+      <h2>选一张卡片，告诉我们你的想法</h2>
+      <p>投稿、报错，或者只是来逛逛，都从这里开始。下面的 Issue 列表由本页直接读取仓库数据渲染——配色、排版、排序都由我们自己决定，不受平台样式限制。</p>
+    </div>
+
+    <div class="cards" aria-label="Issue 入口">
+      <a class="card card--feature" href="https://github.com/CCief/PCL-Professional-Next/issues/new?template=01-feature.yml" target="_blank" rel="noopener">
+        <span class="badge">功能 / 建议</span>
+        <div class="emoji" aria-hidden="true">📫</div>
+        <h3>新功能投稿栏</h3>
+        <p class="desc">想加什么功能、想改哪处体验？把场景和期望写进来，我们会按类型跟进。</p>
+        <span class="cta">提交新功能 <span class="arrow" aria-hidden="true">→</span></span>
+      </a>
+
+      <a class="card card--welcome" href="https://github.com/CCief/PCL-Professional-Next#readme" target="_blank" rel="noopener">
+        <span class="badge">先读这里</span>
+        <div class="emoji" aria-hidden="true">🎉</div>
+        <h3>欢迎来到<br>PCL Professional-Next！</h3>
+        <p class="desc">项目定位、特色功能、血统说明与发布通道，第一次来建议先看一眼。</p>
+        <span class="cta">了解这个项目 <span class="arrow" aria-hidden="true">→</span></span>
+      </a>
+
+      <a class="card card--bug" href="https://github.com/CCief/PCL-Professional-Next/issues/new?template=02-bug.yml" target="_blank" rel="noopener">
+        <span class="badge">问题 / 崩溃</span>
+        <div class="emoji" aria-hidden="true">🐛</div>
+        <h3>Bug 反馈栏</h3>
+        <p class="desc">崩了、下载失败、界面错位？带上版本号和复现步骤，修起来会快很多。</p>
+        <span class="cta">报告一个 Bug <span class="arrow" aria-hidden="true">→</span></span>
+      </a>
+    </div>
+
+    <div class="issue-board">
+      <div class="board-head">
+        <h3>最近的 Issue</h3>
+        <span class="live" id="board-live">正在读取仓库数据</span>
+        <a href="https://github.com/CCief/PCL-Professional-Next/issues" target="_blank" rel="noopener">在 GitHub 查看 ↗</a>
+      </div>
+      <ul class="issue-list" id="issue-list" aria-live="polite">
+        <li class="issue-skeleton"></li>
+        <li class="issue-skeleton"></li>
+        <li class="issue-skeleton"></li>
+      </ul>
+      <p class="board-note" id="board-note">列表来自公开的 GitHub REST API；若网络受限会显示离线快照，内容以 GitHub 为准。</p>
+    </div>
+  </div>
+</section>
+
+<section class="section section-alt" id="features">
+  <div class="container">
+    <div class="section-head">
+      <span class="sec-tag">WHAT'S NEW</span>
+      <h2>相比 PCL Pro，多了这些</h2>
+      <p>这一层增强由本项目独立开发，与上游功能无关；源码来自对已发布产物的反编译重建，仅供逆向学习与可复现构建研究。</p>
+    </div>
+    <div class="features">
+      <div class="feature"><div class="ficon">⚡</div><h3>快捷下载</h3><p>搜索到模组后跳过详情页直接开始下载，不再逐个点进卡片。</p></div>
+      <div class="feature"><div class="ficon">🧩</div><h3>自动下载前置</h3><p>自动识别并安装依赖，已安装的自动跳过；修复了前置文件被标成父项目中文名的问题。</p></div>
+      <div class="feature"><div class="ficon">🎯</div><h3>版本 / 加载器匹配</h3><p>按已安装的 Minecraft 版本与加载器自动选择对应文件，避免装错版本。</p></div>
+      <div class="feature"><div class="ficon">💾</div><h3>开关状态记忆</h3><p>快捷下载与自动前置的开关状态自动保存，重启后不用重新设置。</p></div>
+      <div class="feature"><div class="ficon">📅</div><h3>日历版本正确分组</h3><p>26.x 这类日历版本不再被误归进「远古版本」，筛选条里的复选框也会跟着卡片动画走。</p></div>
+      <div class="feature"><div class="ficon">🛠️</div><h3>稳定性修复</h3><p>修复提示框误带输入框、CLR invalid program 崩溃与下载页布局错位等问题。</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="channels">
+  <div class="container">
+    <div class="section-head">
+      <span class="sec-tag">RELEASE CHANNELS</span>
+      <h2>三条发布通道，各管一段</h2>
+      <p>通道由版本标签后缀唯一决定，不靠人工标记。想尝鲜就走 Alpha，想帮忙测试就走 Beta，求稳就等 Release。</p>
+    </div>
+    <div class="channels">
+      <div class="channel channel--alpha">
+        <span class="ctag">ALPHA</span>
+        <h3>实验通道</h3>
+        <p>随时构建，允许不稳定。用于新功能研发和实验，功能可能随时被修改或删除，不受稳定版开发路线限制。</p>
+        <code>vX.Y.Z-alpha[.N]</code>
+        <div class="cmark">GitHub 标记：Pre-release</div>
+      </div>
+      <div class="channel channel--beta">
+        <span class="ctag">BETA</span>
+        <h3>测试通道</h3>
+        <p>稳定版的测试版本。经过初步筛选的 Alpha 功能可能被合并进来，并进行进一步优化和稳定性测试；进入即功能冻结。</p>
+        <code>vX.Y.Z-beta[.N]</code>
+        <div class="cmark">GitHub 标记：Pre-release</div>
+      </div>
+      <div class="channel channel--release">
+        <span class="ctag">RELEASE</span>
+        <h3>正式通道</h3>
+        <p>正式发布版本。由 Beta 版本经过较长时间、广泛的公众测试和问题修复后发布，是目前最稳定的版本。</p>
+        <code>vX.Y.Z</code>
+        <div class="cmark">GitHub 标记：Latest</div>
+      </div>
+    </div>
+    <p class="channel-note">晋升顺序：<b>Alpha → Beta → Release</b>；同一个 X.Y.Z 只晋升一次。完整规则见仓库 <a href="https://github.com/CCief/PCL-Professional-Next/blob/main/RELEASE_CHANNELS.md" target="_blank" rel="noopener">RELEASE_CHANNELS.md ↗</a>。当前对外版本序列自 <b>v0.1.0-alpha</b> 起算，此前的 v1.0.x 仅为内部迭代编号。</p>
+  </div>
+</section>
+
+<section class="section section-alt" id="download">
+  <div class="container">
+    <div class="download-card">
+      <div>
+        <span class="sec-tag">DOWNLOAD</span>
+        <h2>PCL-Pro-N-v0.1.0-alpha.exe</h2>
+        <p>第一个对外预发行版，Alpha 通道。单文件 exe，解压即用，无需安装 .NET 8；内容与内部迭代 v1.0.14-beta 一致，署名已统一为 CCief。</p>
+        <div class="file-line">文件名 <code>PCL-Pro-N-v0.1.0-alpha.exe</code> · 大小 <code>13,068,714 B</code> · 发布 <code>2026-11-08</code></div>
+        <div class="hash-line">SHA-256：619d8c638ca6ce2747c12088194e284db9afc408758171855b00f1b56c29e407</div>
+      </div>
+      <div class="download-actions">
+        <a class="btn btn-primary" href="https://github.com/CCief/PCL-Professional-Next/releases/download/v0.1.0-alpha/PCL-Pro-N-v0.1.0-alpha.exe">下载 exe ↓</a>
+        <a class="btn btn-ghost" href="https://github.com/CCief/PCL-Professional-Next/releases" target="_blank" rel="noopener">全部版本 ↗</a>
+      </div>
+    </div>
+    <div class="warn">⚠️ 这是 <b>Alpha 预发行版</b>，仅供测试与逆向学习，功能可能随时变动。普通玩家请优先使用上游官方发行版。本项目不是 PCL 原版，也不是 PCL Pro 的官方版本，与上游作者无隶属、授权或合作关系。</div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <h4>PCL Professional-Next</h4>
+        <div class="lineage"><span>Hex-Dragon/PCL2</span><span>→</span><span>PCL Pro（二改）</span><span>→</span><span>PCL Pro-N（二改的二改）</span></div>
+        <p>个人维护的逆向研究型发行版，由 CCief 维护。项目定位是逆向学习、可复现构建与个人研究；源码由已发布产物反编译并配合 BAML 资源重建得到，并非上游公开的官方源码。</p>
+      </div>
+      <div>
+        <h4>导航</h4>
+        <ul>
+          <li><a href="#issues">Issue 导航</a></li>
+          <li><a href="#features">功能特性</a></li>
+          <li><a href="#channels">发布通道</a></li>
+          <li><a href="#download">下载</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>链接</h4>
+        <ul>
+          <li><a href="https://github.com/CCief/PCL-Professional-Next" target="_blank" rel="noopener">GitHub 仓库 ↗</a></li>
+          <li><a href="https://github.com/CCief/PCL-Professional-Next/releases" target="_blank" rel="noopener">Releases ↗</a></li>
+          <li><a href="https://github.com/CCief/PCL-Professional-Next/issues" target="_blank" rel="noopener">Issues ↗</a></li>
+          <li><a href="https://github.com/CCief/PCL-Professional-Next/blob/main/LICENSE" target="_blank" rel="noopener">GPL-3.0 许可证 ↗</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      © 2026 CCief · GPL-3.0 · 本站由 GitHub Pages 托管，静态页面、无第三方脚本、无插件依赖。<br>
+      与 Hex-Dragon/PCL2 作者及任何 PCL Pro 维护者没有隶属、授权或合作关系。
+    </div>
+  </div>
+</footer>
+
+<script src="assets/site.js" defer></script>
 </body>
 </html>

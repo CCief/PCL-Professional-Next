@@ -4,15 +4,15 @@
 
 PCL Pro-N 是 [Plain Craft Launcher 2](https://github.com/Hex-Dragon/PCL2) 的一条远端衍生分支，核心目标是**让下载更简单**：快捷下载、自动安装前置模组、一键匹配版本与加载器。本仓库 `PCL-Professional-Next` 是它的源码仓库。
 
-当前版本：**v0.1.0-alpha**（Alpha 通道 · 第一个预发行版）｜ 发布通道规则见 [RELEASE_CHANNELS.md](RELEASE_CHANNELS.md)
+当前版本：**v0.1.0-alpha**（Alpha 通道 · 第一个预发行版）｜ 🌐 [项目官网](https://ccief.github.io/PCL-Professional-Next/) ｜ 发布通道规则见 [RELEASE_CHANNELS.md](RELEASE_CHANNELS.md)
 
 ## 🗂️ Issue 导航
 
 [![📫 新功能投稿栏](docs/cards/feature.svg)](https://github.com/CCief/PCL-Professional-Next/issues/new?template=01-feature.yml) [![🎉 欢迎来到 PCL Professional-Next！](docs/cards/welcome.svg)](https://github.com/CCief/PCL-Professional-Next#readme) [![🐛 Bug 反馈栏](docs/cards/bug.svg)](https://github.com/CCief/PCL-Professional-Next/issues/new?template=02-bug.yml)
 
-三张卡片从左到右分别是 **淡蓝 · 新功能投稿**、**淡彩 · 项目欢迎**、**淡绿 · Bug 反馈**。也可以打开 [卡片式 Issue 导航页](https://ccief.github.io/PCL-Professional-Next/) 查看横排大卡片视图；提交前建议先搜一下[已有 Issue](https://github.com/CCief/PCL-Professional-Next/issues?q=is%3Aissue)。
+三张卡片从左到右分别是 **淡蓝 · 新功能投稿**、**淡彩 · 项目欢迎**、**淡绿 · Bug 反馈**。[项目官网](https://ccief.github.io/PCL-Professional-Next/) 上有完整版：淡彩大卡片、实时同步的 Issue 列表、功能介绍、发布通道与下载入口，样式完全自定义，不受 GitHub 页面限制；提交前建议先搜一下[已有 Issue](https://github.com/CCief/PCL-Professional-Next/issues?q=is%3Aissue)。
 
-**Issues 列表页本身**：这三个入口已经做成置顶 Issue（#2 / #3 / #4），标题分别带 🟦 / 🌈 / 🟩 彩块，打开 [Issues](https://github.com/CCief/PCL-Professional-Next/issues) 就能在列表上方看到横排的三张卡片，配合淡彩标签区分类型。GitHub 不允许仓库自定义该页的样式，所以卡片背景只能跟随 GitHub 主题色；淡蓝 / 淡彩 / 淡绿配色的完整卡片请看上面的卡片行或 [卡片式 Issue 导航页](https://ccief.github.io/PCL-Professional-Next/)。
+**Issues 列表页本身**：这三个入口已经做成置顶 Issue（#2 / #3 / #4），标题分别带 🟦 / 🌈 / 🟩 彩块，打开 [Issues](https://github.com/CCief/PCL-Professional-Next/issues) 就能在列表上方看到横排的三张卡片，配合淡彩标签区分类型。GitHub 不允许仓库自定义该页的样式，所以卡片背景只能跟随 GitHub 主题色；淡蓝 / 淡彩 / 淡绿配色的完整卡片请看上面的卡片行或[项目官网](https://ccief.github.io/PCL-Professional-Next/)。
 
 ## ⚠️ 项目定位：先把血统讲清楚
 
