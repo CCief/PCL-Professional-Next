@@ -216,11 +216,14 @@ namespace PCL
         // state 布局（全用 BCL 类型，避免类型移植引入新类）：
         //  [0]=加载器下拉   [1]=宿主(筛选条 MyCard / PanAlways)  [2]=Canvas(无则 null)
         //  [3]=下载前置mod  [4]=所属 PageComp                    [5]=按钮行 StackPanel
-        //  [6]=排序方式下拉(备用锚点)
+        //  [6]=排序方式下拉 [7]=光影加载器下拉                  [8]=重置按钮(最右侧可见控件)
+        // 各分类可见性不同（PageComp.cs:647-664）：Mod/整合包显示 [0]，光影显示 [7]，
+        // 其余页两者都折叠。锚点必须按可见性依次回退，不能只认 [0]。
         private static object[] MakeState(object loader, object host, object canvas,
-                                          object deps, object page, object row, object sort)
+                                          object deps, object page, object row, object sort,
+                                          object shader, object reset)
         {
-            return new object[] { loader, host, canvas, deps, page, row, sort };
+            return new object[] { loader, host, canvas, deps, page, row, sort, shader, reset };
         }
 
         // 每组自己复核「下载前置mod」可见性 + 重定位；切换分类时再次调用，保证可逆。
@@ -240,9 +243,10 @@ namespace PCL
             catch { }
         }
 
-        // 只重定位：优先用加载器下拉当锚点；数据包/资源包等页把它折叠了（宽 0），
-        // 退回「排序方式」下拉。锚点或宿主不可见时直接跳过，绝不把坏坐标写进去
-        // （页面切走时 TranslatePoint 会给出无效值，写了就再也回不来）。
+        // 只重定位：按分类可见性依次挑锚点。
+        // 筛选条 MyCard 是 7 列 Grid（3 列是 * 自适应），loader 折叠后 * 列会重新分配宽度，
+        // 把排序下拉推到卡片右侧；若仍用「锚点 X + 锚点宽 + 7」而不受宿主宽度约束，
+        // Canvas 不裁剪子元素，按钮就会被画到卡片/窗口边框之外。
         private static void RepositionState(object[] state)
         {
             try
@@ -252,13 +256,17 @@ namespace PCL
                 var row = state[5] as FrameworkElement;
                 var host = state[1] as FrameworkElement;
                 if (row == null || host == null || !host.IsLoaded || !host.IsVisible) return;
-                var loader = state[0] as FrameworkElement;
-                var sort = state[6] as FrameworkElement;
+                // 0=加载器(Mod/整合包) 7=光影加载器(光影) 6=排序方式 8=重置按钮(兜底)
+                // 刻意不用 int[] 字面量：C# 会把它编译成 <PrivateImplementationDetails>
+                // 的静态数据字段，而类型移植只搬方法体、不搬该字段，运行版会 MissingFieldException。
                 FrameworkElement anchor = null;
-                if (loader != null && loader.IsLoaded && loader.IsVisible && loader.ActualWidth > 10)
-                    anchor = loader;
-                else if (sort != null && sort.IsLoaded && sort.IsVisible && sort.ActualWidth > 10)
-                    anchor = sort;
+                for (int k = 0; k < 4 && anchor == null; k++)
+                {
+                    int idx = (k == 0) ? 0 : (k == 1 ? 7 : (k == 2 ? 6 : 8));
+                    if (state.Length <= idx) continue;
+                    var c = state[idx] as FrameworkElement;
+                    if (c != null && c.IsLoaded && c.IsVisible && c.ActualWidth > 10) anchor = c;
+                }
                 if (anchor == null) return;
                 RepositionRow(row, anchor, host);
             }
@@ -301,12 +309,36 @@ namespace PCL
                 var pt = lc.TranslatePoint(new Point(0, 0), pa);
                 if (double.IsNaN(pt.X) || double.IsNaN(pt.Y) ||
                     double.IsInfinity(pt.X) || double.IsInfinity(pt.Y)) return;
+                double hostW = pa.ActualWidth;
+                double hostH = pa.ActualHeight;
+                if (double.IsNaN(hostW) || double.IsNaN(hostH) || hostW < 60 || hostH < 20) return;
+                double rowW = row.ActualWidth;
+                double rowH = row.ActualHeight;
+                if (double.IsNaN(rowW) || rowW <= 0) rowW = 200;   // 尚未测量时用估计值
+                if (double.IsNaN(rowH) || rowH <= 0) rowH = 28;
+                // 卡片入场动画是 RenderTransform 平移，TranslatePoint 会把它算进相对坐标，
+                // 得到远大于宿主尺寸的值；这种帧直接跳过，绝不写进 Canvas.Left/Top。
+                if (pt.X < -hostW || pt.X > hostW * 1.5 || pt.Y < -hostH || pt.Y > hostH * 1.5) return;
+
                 double w = lc.ActualWidth > 10 ? lc.ActualWidth : 90;
                 double targetLeft = pt.X + w + 7;
+                // 硬边界：按钮行的右边缘必须留在宿主卡片内（右边留 12px，左边至少 8px）。
+                // 这一条专治「折叠 loader 后 * 列把排序下拉推到右侧，按钮被画到边框外」。
+                double maxLeft = hostW - rowW - 12;
+                if (maxLeft < 8) maxLeft = 8;
+                if (targetLeft > maxLeft) targetLeft = maxLeft;
+                if (targetLeft < 8) targetLeft = 8;
+
                 double targetTop = pt.Y + 4;
+                double maxTop = hostH - rowH - 2;
+                if (maxTop < 0) maxTop = 0;
+                if (targetTop > maxTop) targetTop = maxTop;
+                if (targetTop < 0) targetTop = 0;
+
                 double curL = System.Windows.Controls.Canvas.GetLeft(row);
                 double curT = System.Windows.Controls.Canvas.GetTop(row);
-                if (double.IsNaN(curL) || Math.Abs(curL - targetLeft) > 2 || Math.Abs(curT - targetTop) > 2)
+                if (double.IsNaN(curL) || double.IsNaN(curT) ||
+                    Math.Abs(curL - targetLeft) > 2 || Math.Abs(curT - targetTop) > 2)
                 {
                     System.Windows.Controls.Canvas.SetLeft(row, targetLeft);
                     System.Windows.Controls.Canvas.SetTop(row, targetTop);
@@ -355,9 +387,11 @@ namespace PCL
                 cbDeps.Visibility = Visibility.Collapsed;   // 由 SyncState 按本组 page 决定
                 row.Children.Add(cbDeps);
 
-                // 锚点：加载器下拉（数据包等页会折叠它），备用排序方式下拉
+                // 锚点：加载器下拉（资源包/数据包等页会折叠它）、光影加载器、排序方式、重置按钮
                 var sortCombo = GetProperty(page, "ComboSearchSort") as FrameworkElement;
                 var loaderCombo = GetProperty(page, "ComboSearchLoader") as FrameworkElement;
+                var shaderCombo = GetProperty(page, "ComboSearchShaderLoader") as FrameworkElement;
+                var resetBtn = GetProperty(page, "BtnSearchReset") as FrameworkElement;
                 Panel target = sortCombo != null ? GetParentPanel(sortCombo) : null;
 
                 if (target == null)
@@ -371,7 +405,7 @@ namespace PCL
                         if (i2 >= 0) idx = i2;
                     }
                     panAlways.Children.Insert(idx, row);
-                    var st0 = MakeState(loaderCombo, panAlways, null, cbDeps, page, row, sortCombo);
+                    var st0 = MakeState(loaderCombo, panAlways, null, cbDeps, page, row, sortCombo, shaderCombo, resetBtn);
                     row.Tag = st0;
                     AddState(st0);
                     SyncState(st0);
@@ -383,7 +417,10 @@ namespace PCL
                     // 浮层挂进筛选条所在的 MyCard 内部：卡片入场动画（TranslateTransform）
                     // 会整体带动它，且 GetAllAnimControls 遇到 MyCard 就停止递归。
                     // Canvas 高度 0 不参与布局，避免「坐标 → loader → panAlways 布局」循环。
-                    FrameworkElement host = (loaderCombo != null ? FindHostCard(loaderCombo) : null)
+                    // 折叠的 loader 不一定还能沿视觉树找到 MyCard（宿主退化成 PanAlways 后，
+                    // 相对坐标会带上卡片动画位移 → 按钮飞出边框），所以逐个候选找卡片。
+                    FrameworkElement host = FindHostCard(loaderCombo) ?? FindHostCard(shaderCombo)
+                                            ?? FindHostCard(sortCombo) ?? FindHostCard(resetBtn)
                                             ?? (FrameworkElement)panAlways;
 
                     var canvas = new System.Windows.Controls.Canvas();
@@ -393,7 +430,7 @@ namespace PCL
                     canvas.Children.Add(row);
                     System.Windows.Controls.Panel.SetZIndex(canvas, 1000);
 
-                    var state = MakeState(loaderCombo, host, canvas, cbDeps, page, row, sortCombo);
+                    var state = MakeState(loaderCombo, host, canvas, cbDeps, page, row, sortCombo, shaderCombo, resetBtn);
                     canvas.Tag = state;
                     row.Tag = state;
                     AddState(state);
@@ -420,7 +457,7 @@ namespace PCL
                         if (idx >= 0) { target.Children.Insert(idx + 1, row); inserted = true; }
                     }
                     if (!inserted) target.Children.Add(row);
-                    var st1 = MakeState(loaderCombo, target, null, cbDeps, page, row, sortCombo);
+                    var st1 = MakeState(loaderCombo, target, null, cbDeps, page, row, sortCombo, shaderCombo, resetBtn);
                     row.Tag = st1;
                     AddState(st1);
                     SyncState(st1);
